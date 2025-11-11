@@ -1,3 +1,6 @@
+import { signOut } from 'firebase/auth';
+import { auth } from './firebaseConfig';
+
 // src/Dashboard.tsx
 import React from 'react';
 
@@ -57,6 +60,23 @@ const Dashboard: React.FC<Props> = ({ email }) => {
           <button style={btn}>💰 Wallet</button>
           <button style={btn}>📷 Scan</button>
           <button style={btn}>👤 Profile</button>
+          <div style={{ marginTop: 16 }}>
+  <button
+    onClick={() => signOut(auth)}
+    style={{
+      padding: '10px 14px',
+      background: 'red',
+      color: 'white',
+      border: 'none',
+      borderRadius: 12,
+      cursor: 'pointer',
+      fontWeight: 600
+    }}
+  >
+    🚪 Logout
+  </button>
+</div>
+
         </div>
       </div>
     </div>
@@ -74,3 +94,4 @@ const btn: React.CSSProperties = {
 };
 
 export default Dashboard;
+
