@@ -1,126 +1,142 @@
-import React, { useEffect, useState } from "react";
-import { collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { getFirestore } from "firebase/firestore";
-import app from "./firebaseConfig";
+// src/Dashboard.tsx
+import React, { useState } from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "./firebaseConfig";
+import Tasks from "./Tasks";
 
-const db = getFirestore(app);
+type Props = { email?: string | null };
 
-interface Task {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-const Tasks: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTask, setNewTask] = useState("");
-
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, "tasks"), (snapshot) => {
-      const taskList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Task[];
-      setTasks(taskList);
-    });
-
-    return () => unsub();
-  }, []);
-
-  const addTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTask.trim()) return;
-
-    await addDoc(collection(db, "tasks"), {
-      text: newTask,
-      completed: false,
-    });
-    setNewTask("");
-  };
-
-  const toggleComplete = async (id: string, completed: boolean) => {
-    const taskRef = doc(db, "tasks", id);
-    await updateDoc(taskRef, { completed: !completed });
-  };
-
-  const deleteTask = async (id: string) => {
-    await deleteDoc(doc(db, "tasks", id));
-  };
+const Dashboard: React.FC<Props> = ({ email }) => {
+  const [showTasks, setShowTasks] = useState(false);
 
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h2>📝 Orbi Tasks</h2>
-
-      <form onSubmit={addTask} style={{ marginBottom: "20px" }}>
-        <input
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          placeholder="Enter new task..."
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #C48AF6, #FF71C6)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        fontFamily: "Poppins, sans-serif",
+        padding: "24px",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 520,
+          background: "rgba(255,255,255,0.12)",
+          borderRadius: 16,
+          boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+          padding: 24,
+          textAlign: "center",
+          backdropFilter: "blur(6px)",
+          minHeight: "520px",
+        }}
+      >
+        {/* Avatar placeholder */}
+        <div
           style={{
-            padding: "10px",
-            borderRadius: "8px",
-            border: "none",
-            width: "60%",
-          }}
-        />
-        <button
-          type="submit"
-          style={{
-            marginLeft: "10px",
-            padding: "10px 16px",
-            border: "none",
-            borderRadius: "8px",
-            background: "#fff",
-            color: "#C48AF6",
-            fontWeight: 600,
-            cursor: "pointer",
+            width: 140,
+            height: 140,
+            margin: "0 auto 12px",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle at 40% 35%, #FFFFFF, #EBD6FF 60%, rgba(255,255,255,0.0) 70%)",
+            position: "relative",
           }}
         >
-          Add
-        </button>
-      </form>
-
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {tasks.map((task) => (
-          <li
-            key={task.id}
+          <div
             style={{
-              background: "rgba(255,255,255,0.15)",
-              margin: "8px auto",
-              padding: "12px 16px",
-              borderRadius: "8px",
-              width: "70%",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              position: "absolute",
+              top: -8,
+              right: -8,
+              width: 22,
+              height: 22,
+              transform: "rotate(45deg)",
+              background: "#F3C6FF",
+              borderRadius: 4,
+              opacity: 0.9,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: -10,
+              left: -6,
+              width: 18,
+              height: 18,
+              transform: "rotate(25deg)",
+              background: "#FFD0F0",
+              borderRadius: 4,
+              opacity: 0.9,
+            }}
+          />
+        </div>
+
+        <h1 style={{ margin: "8px 0 0" }}>🌐 Orbi</h1>
+        <p style={{ margin: "6px 0 18px", opacity: 0.9 }}>
+          Your world. One app.
+        </p>
+
+        <p style={{ fontSize: 14, opacity: 0.85 }}>
+          {email ? `Signed in as ${email}` : "Welcome!"}
+        </p>
+
+        {/* Buttons */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12,
+            marginTop: 18,
+          }}
+        >
+          {/* 📝 Tasks Button */}
+          <button style={btn} onClick={() => setShowTasks(!showTasks)}>
+            📝 Tasks
+          </button>
+
+          <button style={btn}>💰 Wallet</button>
+          <button style={btn}>📷 Scan</button>
+          <button style={btn}>👤 Profile</button>
+        </div>
+
+        {/* 🚪 Logout Button */}
+        <div style={{ marginTop: 20 }}>
+          <button
+            onClick={() => signOut(auth)}
+            style={{
+              padding: "10px 14px",
+              background: "rgba(255,255,255,0.25)",
               color: "white",
+              border: "none",
+              borderRadius: 12,
+              cursor: "pointer",
+              fontWeight: 600,
+              width: "100%",
             }}
           >
-            <span
-              onClick={() => toggleComplete(task.id, task.completed)}
-              style={{
-                textDecoration: task.completed ? "line-through" : "none",
-                cursor: "pointer",
-              }}
-            >
-              {task.text}
-            </span>
-            <button
-              onClick={() => deleteTask(task.id)}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#FFB6C1",
-                cursor: "pointer",
-              }}
-            >
-              ❌
-            </button>
-          </li>
-        ))}
-      </ul>
+            🚪 Logout
+          </button>
+        </div>
+
+        {/* Tasks Section Toggle */}
+        {showTasks && <Tasks />}
+      </div>
     </div>
   );
 };
 
-export default Tasks;
+const btn: React.CSSProperties = {
+  padding: "12px 14px",
+  background: "rgba(255,255,255,0.2)",
+  color: "white",
+  border: "none",
+  borderRadius: 12,
+  cursor: "pointer",
+  fontWeight: 600,
+};
+
+export default Dashboard;
