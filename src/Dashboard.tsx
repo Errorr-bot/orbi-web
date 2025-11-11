@@ -1,8 +1,7 @@
-import { signOut } from 'firebase/auth';
-import { auth } from './firebaseConfig';
-
 // src/Dashboard.tsx
 import React from 'react';
+import { signOut } from 'firebase/auth';
+import { auth } from './firebaseConfig';
 
 type Props = { email?: string | null };
 
@@ -19,15 +18,17 @@ const Dashboard: React.FC<Props> = ({ email }) => {
       padding: '24px'
     }}>
       <div style={{
-        width: '100%',
-        maxWidth: 520,
-        background: 'rgba(255,255,255,0.12)',
-        borderRadius: 16,
-        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-        padding: 24,
-        textAlign: 'center',
-        backdropFilter: 'blur(6px)'
-      }}>
+  width: '100%',
+  maxWidth: 520,
+  background: 'rgba(255,255,255,0.12)',
+  borderRadius: 16,
+  boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+  padding: 24,
+  textAlign: 'center',
+  backdropFilter: 'blur(6px)',
+  minHeight: '500px',
+}}>
+
         {/* Orbi avatar placeholder */}
         <div style={{
           width: 140, height: 140, margin: '0 auto 12px',
@@ -60,7 +61,9 @@ const Dashboard: React.FC<Props> = ({ email }) => {
           <button style={btn}>💰 Wallet</button>
           <button style={btn}>📷 Scan</button>
           <button style={btn}>👤 Profile</button>
-          <div style={{ marginTop: 16 }}>
+        </div>
+        {/* logout button */}
+<div style={{ marginTop: 16 }}>
   <button
     onClick={() => signOut(auth)}
     style={{
@@ -77,7 +80,6 @@ const Dashboard: React.FC<Props> = ({ email }) => {
   </button>
 </div>
 
-        </div>
       </div>
     </div>
   );
@@ -85,7 +87,7 @@ const Dashboard: React.FC<Props> = ({ email }) => {
 
 const btn: React.CSSProperties = {
   padding: '12px 14px',
-  background: 'rgba(255,255,255,0.2)',
+  background: 'red',
   color: 'white',
   border: 'none',
   borderRadius: 12,
