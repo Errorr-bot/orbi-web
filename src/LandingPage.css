@@ -1,0 +1,232 @@
+/* 🌿 ORBI MINT EDITION — LANDING PAGE THEME */
+
+/* Root Layout */
+.lp-root {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f9fffd 0%, #d8fff4 100%);
+  font-family: "Poppins", sans-serif;
+  color: #003d2e;
+  overflow-x: hidden;
+}
+
+/* Navbar */
+.lp-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 3rem;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  margin: 1rem 3rem;
+  box-shadow: 0 4px 20px rgba(0, 80, 60, 0.08);
+  position: sticky;
+  top: 1rem;
+  z-index: 10;
+}
+
+.lp-logo {
+  display: flex;
+  align-items: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #004d3a;
+}
+
+.lp-logo-icon {
+  margin-right: 8px;
+  font-size: 1.5rem;
+}
+
+.lp-nav-right button {
+  margin-left: 12px;
+  font-weight: 500;
+}
+
+/* Mint Buttons */
+.lp-login-btn,
+.lp-getstarted-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.lp-login-btn {
+  background: rgba(255, 255, 255, 0.45);
+  color: #004d3a;
+  border: 1.2px solid rgba(0, 80, 60, 0.2);
+}
+
+.lp-getstarted-btn {
+  background: linear-gradient(135deg, #aaffde, #73ffc4);
+  color: #003d2e;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 180, 120, 0.3);
+}
+
+.lp-login-btn:hover,
+.lp-getstarted-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 150, 100, 0.25);
+}
+
+/* Hero */
+.lp-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: left;
+}
+
+.lp-hero-left {
+  flex: 1 1 420px;
+  padding: 1rem 2rem;
+}
+
+.lp-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #003d2e;
+}
+
+.lp-highlight {
+  background: linear-gradient(90deg, #59ffc2, #9dffe9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lp-sub {
+  margin: 1rem 0 1.5rem;
+  color: #195a47;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.lp-hero-cta {
+  display: flex;
+  gap: 12px;
+}
+
+/* Secondary Button (Learn More) */
+.lp-secondary {
+  padding: 8px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 80, 60, 0.2);
+  color: #004d3a;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.lp-secondary:hover {
+  background: #e5fff4;
+  transform: translateY(-2px);
+}
+
+/* Features */
+.lp-features {
+  padding: 3rem 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.8rem;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  padding: 1.8rem;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 80, 60, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.4s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0, 120, 90, 0.15);
+}
+
+.feature-emoji {
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+}
+
+/* CTA */
+.lp-cta-card {
+  margin: 4rem auto;
+  max-width: 600px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 80, 60, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.lp-footer {
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.9rem;
+  color: #195a47;
+}
+
+/* Scroll indicator */
+.lp-scroll-indicator {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.arrow {
+  width: 18px;
+  height: 28px;
+  border: 2px solid #004d3a;
+  border-radius: 30px;
+  margin: 0 auto;
+  position: relative;
+  animation: scroll 2s infinite;
+}
+
+.arrow::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  background: #004d3a;
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+}
+
+@keyframes scroll {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+  100% { transform: translateY(0); }
+}
+
+/* 🌿 Mint Wave Transition Effect */
+.mint-transition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #aaffde, #73ffc4);
+  z-index: 9999;
+  transform-origin: left;
+  pointer-events: none;
+}

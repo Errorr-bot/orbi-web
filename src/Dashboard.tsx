@@ -1,134 +1,154 @@
-// src/Dashboard.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import "./Dashboard.css";
+import Tasks from "./Tasks";
+import Wallet from "./Wallet";
+import Scan from "./Scan";
+import Profile from "./Profile";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig";
-import Tasks from "./Tasks";
-import Profile from "./Profile";
-import Scan from "./Scan";
-import Wallet from "./Wallet";
-import OrbiAvatar from "./components/OrbiAvatar";
 
-type Props = { email?: string | null };
+const Dashboard: React.FC<{ email?: string }> = ({ email }) => {
+  const [activeTab, setActiveTab] = useState("tasks");
+  const [particles, setParticles] = useState<
+    { id: number; x: number; y: number; size: number }[]
+  >([]);
+  const [hovered, setHovered] = useState<number | null>(null);
 
-const Dashboard: React.FC<Props> = ({ email }) => {
-  const [showTasks, setShowTasks] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showScan, setShowScan] = useState(false);
-  const [showWallet, setShowWallet] = useState(false);
+  const navigate = useNavigate();
+
+  // 🌿 Generate floating mint particles
+  useEffect(() => {
+    const generated = Array.from({ length: 25 }).map((_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: 4 + Math.random() * 3,
+    }));
+    setParticles(generated);
+  }, []);
+
+  // ✅ Handle logout → redirect to landing page
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate("/"); // 👈 Redirect to home after logout
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  const variants = {
+    enter: { opacity: 0, x: 30 },
+    center: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -30 },
+  };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #CA8AF6, #FF1C6C)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "white",
-        fontFamily: "Poppins, sans-serif",
-        padding: "24px",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 520,
-          background: "rgba(255,255,255,0.12)",
-          borderRadius: 16,
-          boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-          padding: 24,
-          textAlign: "center",
-          backdropFilter: "blur(6px)",
-          minHeight: "520px",
-        }}
-      >
-        {/* Header with Avatar */}
-        <div style={{ textAlign: "center", marginBottom: 12 }}>
-          <OrbiAvatar />
-          <h2 style={{ marginTop: 12, fontWeight: 600 }}>Good morning, Syed ✨</h2>
-        </div>
-
-        <h1 style={{ margin: "8px 0 0", fontWeight: 700, fontSize: "2rem" }}>
-          🌐 Orbi
-        </h1>
-        <p style={{ margin: "6px 0 18px", opacity: 0.9 }}>
-          Your world. One app.
-        </p>
-
-        <p style={{ fontSize: 14, opacity: 0.85 }}>
-          {email ? `Signed in as ${email}` : "Welcome!"}
-        </p>
-
-        {/* Main Navigation Buttons */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 12,
-            marginTop: 18,
-          }}
-        >
-          {/* 📝 Tasks */}
-          <button style={btn} onClick={() => setShowTasks(!showTasks)}>
-            📝 Tasks
-          </button>
-
-          {/* 💰 Wallet */}
-          <button style={btn} onClick={() => setShowWallet(!showWallet)}>
-            💰 Wallet
-          </button>
-
-          {/* 📷 Scan */}
-          <button style={btn} onClick={() => setShowScan(!showScan)}>
-            📷 Scan
-          </button>
-
-          {/* 👤 Profile */}
-          <button style={btn} onClick={() => setShowProfile(!showProfile)}>
-            👤 Profile
-          </button>
-        </div>
-
-        {/* 🚪 Logout Button */}
-        <div style={{ marginTop: 20 }}>
-          <button
-            onClick={() => signOut(auth)}
-            style={{
-              padding: "10px 14px",
-              background: "rgba(255,255,255,0.25)",
-              color: "white",
-              border: "none",
-              borderRadius: 12,
-              cursor: "pointer",
-              fontWeight: 600,
-              width: "100%",
+    <div className="dashboard-root">
+      {/* 🌿 Floating Mint Particles */}
+      <div className="mint-particles">
+        {particles.map((p) => (
+          <motion.span
+            key={p.id}
+            className={`mint-particle ${
+              hovered === p.id ? "mint-pulse" : ""
+            }`}
+            initial={{
+              x: `${p.x}vw`,
+              y: `${p.y}vh`,
+              opacity: 0.3 + Math.random() * 0.3,
+              scale: 0.8,
             }}
-          >
-            🚪 Logout
-          </button>
-        </div>
+            animate={{
+              y: [`${p.y}vh`, `${p.y + 5 * Math.sin(p.id)}vh`, `${p.y}vh`],
+              opacity: [0.4, 0.8, 0.4],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 8 + Math.random() * 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            onMouseEnter={() => setHovered(p.id)}
+            onMouseLeave={() => setHovered(null)}
+            style={{
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+            }}
+          />
+        ))}
+      </div>
 
-        {/* Sections */}
-        <div style={{ marginTop: 20 }}>
-          {showWallet && <Wallet />}
-          {showTasks && <Tasks />}
-          {showProfile && <Profile email={email} />}
-          {showScan && <Scan />}
+      {/* Navbar */}
+      <motion.nav
+        className="dashboard-nav"
+        initial={{ opacity: 0, y: -25 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <div className="nav-left">
+          <span className="nav-logo">🌐 Orbi</span>
         </div>
+        <div className="nav-right">
+          <span className="user-email">{email}</span>
+          <motion.button
+            className="logout-btn"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleLogout}
+          >
+            Logout
+          </motion.button>
+        </div>
+      </motion.nav>
+
+      {/* Tabs */}
+      <motion.div
+        className="tab-bar"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+      >
+        {["tasks", "wallet", "scan", "profile"].map((tab) => (
+          <motion.button
+            key={tab}
+            className={`tab-btn ${activeTab === tab ? "active" : ""}`}
+            onClick={() => setActiveTab(tab)}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            {tab === "tasks" && "📝 Tasks"}
+            {tab === "wallet" && "💰 Wallet"}
+            {tab === "scan" && "📷 Scan"}
+            {tab === "profile" && "👤 Profile"}
+          </motion.button>
+        ))}
+      </motion.div>
+
+      {/* Animated Content */}
+      <div className="dashboard-content">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fade-section"
+          >
+            {activeTab === "tasks" && <Tasks />}
+            {activeTab === "wallet" && <Wallet />}
+            {activeTab === "scan" && <Scan />}
+            {activeTab === "profile" && <Profile />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
-};
-
-const btn: React.CSSProperties = {
-  padding: "12px 14px",
-  background: "rgba(255,255,255,0.2)",
-  color: "white",
-  border: "none",
-  borderRadius: 12,
-  cursor: "pointer",
-  fontWeight: 600,
-  transition: "all 0.3s ease",
 };
 
 export default Dashboard;

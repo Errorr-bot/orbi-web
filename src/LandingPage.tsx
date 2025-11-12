@@ -1,147 +1,176 @@
 // src/LandingPage.tsx
-import React from "react";
+import React, { useEffect, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import "./LandingPage.css";
 import OrbiAvatar from "./components/OrbiAvatar";
 
 const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const revealRefs = useRef<(HTMLElement | null)[]>([]);
+  const avatarRef = useRef<HTMLDivElement | null>(null);
+  const ticking = useRef(false);
+
+  // reveal animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) e.target.classList.add("reveal-visible");
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    revealRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // parallax avatar motion
+  useEffect(() => {
+    const onScroll = () => {
+      if (!avatarRef.current) return;
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          const rect = avatarRef.current!.getBoundingClientRect();
+          const mid = window.innerHeight / 2;
+          const offset = (mid - rect.top - rect.height / 2) * 0.03;
+          avatarRef.current!.style.transform = `translateY(${offset}px)`;
+          ticking.current = false;
+        });
+        ticking.current = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const setRevealRef = (el: HTMLElement | null, i: number) => {
+    revealRefs.current[i] = el;
+  };
+
+  // helper to animate mouse-follow shimmer on gradient buttons
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const target = e.currentTarget;
+    const rect = target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    target.style.setProperty("--x", `${x}px`);
+    target.style.setProperty("--y", `${y}px`);
+  };
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #CA8AF6 0%, #FF1C6C 100%)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "Poppins, Avenir, sans-serif",
-        color: "#fff",
-        padding: "40px 20px",
-      }}
-    >
-      {/* Hero Section */}
-      <div
-        style={{
-          textAlign: "center",
-          background: "rgba(255, 255, 255, 0.1)",
-          backdropFilter: "blur(10px)",
-          borderRadius: 20,
-          padding: "50px 40px",
-          boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
-          maxWidth: 600,
-          width: "100%",
-        }}
-      >
-        <h1 style={{ fontSize: "3rem", fontWeight: 700, marginBottom: 10 }}>
-          🌐 Orbi
-        </h1>
-
-        <p style={{ fontSize: "1.1rem", opacity: 0.9, marginBottom: 20 }}>
-          Your world. One app.
-        </p>
-
-        {/* Avatar Section */}
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <OrbiAvatar />
+    <div className="lp-root">
+      {/* Navbar */}
+      <nav className="lp-nav">
+        <div className="lp-nav-left">
+          <div className="lp-logo">
+            <span className="lp-logo-icon">🌐</span>
+            <span className="lp-logo-text">Orbi</span>
+          </div>
         </div>
+        <div className="lp-nav-right">
+          <button className="lp-login-btn" onClick={() => navigate("/login")}>
+            Login
+          </button>
 
-        <p style={{ fontSize: "1.05rem", opacity: 0.85, marginBottom: 30 }}>
-          Connect your tasks, wallet, and lifestyle — all in one beautiful
-          experience.
-        </p>
-
-        <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
-          <a
-            href="/login"
-            style={{
-              textDecoration: "none",
-              background: "#fff",
-              color: "#CA8AF6",
-              padding: "12px 26px",
-              borderRadius: 12,
-              fontWeight: 600,
-              transition: "0.3s ease",
-            }}
+          {/* animated gradient shimmer get started */}
+          <button
+            className="lp-getstarted-btn"
+            onMouseMove={handleMouseMove}
+            onClick={() => navigate("/signup")}
           >
             Get Started
-          </a>
-
-          <a
-            href="#features"
-            style={{
-              textDecoration: "none",
-              background: "rgba(255,255,255,0.25)",
-              color: "#fff",
-              padding: "12px 26px",
-              borderRadius: 12,
-              fontWeight: 600,
-              transition: "0.3s ease",
-            }}
-          >
-            Learn More
-          </a>
+          </button>
         </div>
-      </div>
+      </nav>
 
-      {/* Features Section */}
-      <div id="features" style={{ marginTop: 80, textAlign: "center" }}>
-        <h2
-          style={{
-            fontSize: "2rem",
-            fontWeight: 600,
-            marginBottom: 20,
-          }}
-        >
-          What Orbi Brings You
-        </h2>
+      {/* Hero Section */}
+      <header className="lp-hero">
+        <div className="lp-hero-left reveal" ref={(el) => setRevealRef(el, 0)}>
+          <h1 className="lp-title">
+            Your world. <span className="lp-highlight">One app.</span>
+          </h1>
+          <p className="lp-sub">
+            Orbi connects tasks, wallet, and life — calm design, powerful
+            features, and AI insights.
+          </p>
+
+          <div className="lp-hero-cta">
+            <button
+              className="lp-getstarted-btn"
+              onMouseMove={handleMouseMove}
+              onClick={() => navigate("/signup")}
+            >
+              Get Started
+            </button>
+
+            <a className="lp-secondary" href="#features">
+              Learn More
+            </a>
+          </div>
+        </div>
 
         <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: 20,
+          className="lp-hero-right reveal avatar-container"
+          ref={(el) => {
+            setRevealRef(el, 1);
+            avatarRef.current = el;
           }}
         >
+          <OrbiAvatar />
+        </div>
+      </header>
+
+      {/* Scroll Indicator */}
+      <div className="lp-scroll-indicator" aria-hidden>
+        <div className="arrow" />
+      </div>
+
+      {/* Features */}
+      <section className="lp-features" id="features">
+        <div className="feature-grid">
           {[
-            {
-              icon: "📝",
-              title: "Tasks",
-              desc: "Track everything you need to do.",
-            },
-            {
-              icon: "💰",
-              title: "Wallet",
-              desc: "Manage your daily expenses easily.",
-            },
-            {
-              icon: "📷",
-              title: "Scan",
-              desc: "Extract text from images instantly.",
-            },
-            {
-              icon: "👤",
-              title: "Profile",
-              desc: "Personalized dashboard & insights.",
-            },
-          ].map((f) => (
+            { icon: "📝", title: "Tasks", text: "Organize your day calmly." },
+            { icon: "💰", title: "Wallet", text: "Track & split expenses easily." },
+            { icon: "📷", title: "Scan", text: "Extract text instantly." },
+            { icon: "👤", title: "Profile", text: "Your data, simplified." },
+          ].map((f, i) => (
             <div
               key={f.title}
-              style={{
-                background: "rgba(255,255,255,0.2)",
-                borderRadius: 16,
-                padding: "20px 24px",
-                minWidth: 200,
-                maxWidth: 240,
-                boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
-              }}
+              className="feature-card reveal"
+              ref={(el) => setRevealRef(el, i + 2)}
             >
-              <h3 style={{ fontSize: "1.4rem" }}>
-                {f.icon} {f.title}
-              </h3>
-              <p style={{ fontSize: "0.95rem", opacity: 0.75 }}>{f.desc}</p>
+              <div className="feature-emoji">{f.icon}</div>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="lp-cta reveal" ref={(el) => setRevealRef(el, 6)}>
+        <div className="lp-cta-card">
+          <h3>Ready to make life simpler?</h3>
+          <p>Join Orbi — manage your life, money, and moments with ease.</p>
+          <button
+            className="lp-getstarted-btn"
+            onMouseMove={handleMouseMove}
+            onClick={() => navigate("/signup")}
+          >
+            Create Free Account
+          </button>
+        </div>
+      </section>
+
+      <footer className="lp-footer">
+        <p>© {new Date().getFullYear()} Orbi — Your world. One app.</p>
+      </footer>
     </div>
   );
 };

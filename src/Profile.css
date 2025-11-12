@@ -1,0 +1,67 @@
+.profile-container {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 255, 204, 0.2);
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  width: 80%;
+  margin: 20px auto;
+  box-shadow: 0 4px 25px rgba(0, 255, 204, 0.1);
+}
+
+.profile-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 15px rgba(0, 255, 204, 0.4));
+}
+
+.profile-name {
+  font-weight: 600;
+  color: #003d2e;
+}
+
+.profile-bio {
+  color: rgba(0, 60, 45, 0.7);
+  margin-bottom: 8px;
+}
+
+.profile-edit,
+.profile-save {
+  background: linear-gradient(135deg, #aaffde, #73ffc4);
+  border: none;
+  border-radius: 12px;
+  padding: 6px 14px;
+  font-weight: 600;
+  color: #003d2e;
+  cursor: pointer;
+}
+
+.profile-input,
+.profile-textarea {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 10px;
+  margin: 5px 0;
+  width: 100%;
+}
+
+.xp-bar-wrap {
+  width: 80%;
+  margin: 10px auto 0;
+}
+
+.xp-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 255, 204, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ffc6, #aaffde);
+}

@@ -1,71 +1,52 @@
-// src/Profile.tsx
-import React from "react";
-import { auth } from "./firebaseConfig";
+import React, { useState } from "react";
+import "./Profile.css";
 
-interface ProfileProps {
-  email?: string | null;
-}
-
-const Profile: React.FC<ProfileProps> = ({ email }) => {
-  const joinDate = new Date(
-    auth.currentUser?.metadata.creationTime || ""
-  ).toLocaleDateString();
-
-  const xp = 70; // demo XP value for now
+const Profile: React.FC = () => {
+  const [name, setName] = useState("Syed Shuaib");
+  const [bio, setBio] = useState("Exploring calm technology & AI 🌿");
+  const [editing, setEditing] = useState(false);
+  const [xp, setXp] = useState(65);
 
   return (
-    <div
-      style={{
-        marginTop: "30px",
-        background: "rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        padding: "24px",
-        textAlign: "center",
-        color: "white",
-      }}
-    >
-      <h2>👤 Profile</h2>
-
-      {/* Orbi Avatar */}
-      <div
-        style={{
-          width: 100,
-          height: 100,
-          margin: "12px auto",
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle at 40% 35%, #FFFFFF, #EBD6FF 60%, rgba(255,255,255,0.0) 70%)",
-          boxShadow: "0 0 25px rgba(255,255,255,0.4)",
-        }}
+    <div className="profile-container">
+      <img
+        src={process.env.PUBLIC_URL + "/avatar_orbi.png"}
+        alt="Orbi Avatar"
+        className="profile-img"
       />
 
-      <p style={{ fontSize: 14, opacity: 0.85 }}>
-        <strong>Email:</strong> {email || "Unknown"}
-      </p>
-      <p style={{ fontSize: 14, opacity: 0.85 }}>
-        <strong>Joined:</strong> {joinDate || "N/A"}
-      </p>
+      {editing ? (
+        <>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="profile-input"
+          />
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            className="profile-textarea"
+          />
+          <button className="profile-save" onClick={() => setEditing(false)}>
+            Save
+          </button>
+        </>
+      ) : (
+        <>
+          <h2 className="profile-name">{name}</h2>
+          <p className="profile-bio">{bio}</p>
+          <button className="profile-edit" onClick={() => setEditing(true)}>
+            Edit Profile
+          </button>
+        </>
+      )}
 
-      {/* XP Bar */}
-      <div
-        style={{
-          marginTop: "16px",
-          background: "rgba(255,255,255,0.25)",
-          borderRadius: "8px",
-          height: "12px",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            width: `${xp}%`,
-            background: "linear-gradient(90deg,#FFD0F0,#C48AF6)",
-            height: "100%",
-            transition: "width 0.5s ease",
-          }}
-        ></div>
+      <div className="xp-bar-wrap">
+        <div className="xp-label">Level Progress</div>
+        <div className="xp-bar">
+          <div className="xp-fill" style={{ width: `${xp}%` }} />
+        </div>
       </div>
-      <p style={{ fontSize: 12, marginTop: "6px" }}>XP {xp}/100</p>
     </div>
   );
 };

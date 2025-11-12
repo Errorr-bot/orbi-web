@@ -1,18 +1,46 @@
-import React from "react";
+// src/components/OrbiAvatar.tsx
+import React, { useEffect, useRef } from "react";
 
-const OrbiAvatar: React.FC = () => {
+/**
+ * OrbiAvatar — floating AI avatar with interactive glow + aura.
+ * - Follows cursor slightly for depth (parallax).
+ * - Has breathing, floating, and aura particle animations.
+ * - Uses your avatar_orbi.png (transparent background).
+ */
+const OrbiAvatar: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
+  const avatarRef = useRef<HTMLDivElement | null>(null);
+
+  // subtle parallax based on mouse movement
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!avatarRef.current) return;
+      const rect = avatarRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      avatarRef.current.style.setProperty("--x", `${x * 0.03}px`);
+      avatarRef.current.style.setProperty("--y", `${y * 0.03}px`);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   return (
     <div
+      ref={avatarRef}
+      className="orbi-avatar-wrap"
       style={{
         position: "relative",
         width: 180,
         height: 200,
         margin: "0 auto",
-        animation: "float 4s ease-in-out infinite",
         filter: "drop-shadow(0 0 25px rgba(173, 100, 255, 0.6))",
+        animation: "float 4s ease-in-out infinite",
+        transform: "translate(var(--x), var(--y))",
+        transition: "transform 0.2s ease-out",
+        ...style,
       }}
     >
-      {/* Avatar Image (floating freely, no circle background) */}
+      {/* Avatar Image */}
       <img
         src={process.env.PUBLIC_URL + "/avatar_orbi.png"}
         alt="Orbi Avatar"
@@ -22,10 +50,11 @@ const OrbiAvatar: React.FC = () => {
           objectFit: "contain",
           borderRadius: "20px",
           animation: "breath 5s ease-in-out infinite",
+          filter: "drop-shadow(0 0 12px rgba(150, 100, 255, 0.7))",
         }}
       />
 
-      {/* Floating aura particles / crystals */}
+      {/* Floating aura particles / light crystals */}
       <div
         style={{
           position: "absolute",
@@ -63,7 +92,7 @@ const OrbiAvatar: React.FC = () => {
         }}
       />
 
-      {/* Animations */}
+      {/* Internal animations */}
       <style>
         {`
           @keyframes float {

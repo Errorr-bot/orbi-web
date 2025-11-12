@@ -1,0 +1,32 @@
+.scan-container {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 255, 204, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 20px auto;
+  width: 80%;
+  text-align: center;
+  box-shadow: 0 4px 25px rgba(0, 255, 204, 0.1);
+}
+
+.scan-sub {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.scan-box {
+  border: 2px dashed rgba(0, 255, 204, 0.4);
+  border-radius: 14px;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.scan-upload {
+  background: linear-gradient(135deg, #aaffde, #73ffc4);
+  color: #00281d;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}

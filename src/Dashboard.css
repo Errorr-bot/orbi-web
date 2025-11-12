@@ -1,0 +1,135 @@
+.dashboard-root {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(145deg, #fafffa, #d7fff0);
+  display: flex;
+  flex-direction: column;
+  font-family: "Poppins", sans-serif;
+  overflow: hidden;
+}
+
+/* 🌿 Mint Floating Particles */
+.mint-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.mint-particle {
+  position: absolute;
+  background: radial-gradient(circle, #73ffc4 0%, rgba(115, 255, 196, 0) 70%);
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.6;
+  transition: all 0.4s ease;
+}
+
+/* Particle hover glow pulse */
+.mint-pulse {
+  filter: blur(2px) drop-shadow(0 0 12px rgba(115, 255, 196, 0.8));
+  transform: scale(1.5);
+  opacity: 1;
+}
+
+/* Navbar */
+.dashboard-nav {
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 30px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 15px rgba(0, 255, 204, 0.15);
+  border-bottom: 1px solid rgba(0, 255, 204, 0.15);
+  border-radius: 0 0 20px 20px;
+}
+
+.nav-logo {
+  font-weight: 700;
+  color: #007a5c;
+  font-size: 1.25rem;
+  text-shadow: 0 0 6px rgba(0, 255, 204, 0.2);
+}
+
+.user-email {
+  color: rgba(0, 60, 45, 0.6);
+  font-size: 0.9rem;
+  margin-right: 15px;
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #aaffde, #73ffc4);
+  border: none;
+  border-radius: 10px;
+  padding: 7px 16px;
+  color: #003d2e;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(0, 255, 204, 0.15);
+}
+
+.logout-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 255, 204, 0.3);
+}
+
+/* Tabs */
+.tab-bar {
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 25px;
+  gap: 12px;
+}
+
+.tab-btn {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 255, 204, 0.15);
+  border-radius: 14px;
+  padding: 10px 22px;
+  font-weight: 500;
+  color: #004733;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 10px rgba(0, 255, 204, 0.1);
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #aaffde, #73ffc4);
+  color: #003d2e;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(0, 255, 204, 0.25);
+}
+
+/* Content area */
+.dashboard-content {
+  z-index: 2;
+  flex-grow: 1;
+  padding: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: hidden;
+}
+
+/* Main container */
+.fade-section {
+  width: 100%;
+  max-width: 900px;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 20px;
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 204, 0.15);
+  box-shadow: 0 4px 25px rgba(0, 255, 204, 0.1);
+}

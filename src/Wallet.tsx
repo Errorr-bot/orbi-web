@@ -1,128 +1,86 @@
-// src/Wallet.tsx
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import "./Wallet.css";
 
-interface Transaction {
+interface Expense {
   id: number;
-  label: string;
+  name: string;
   amount: number;
 }
 
 const Wallet: React.FC = () => {
-  const [balance, setBalance] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [label, setLabel] = useState("");
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [name, setName] = useState("");
   const [amount, setAmount] = useState<number | "">("");
+  const [balance, setBalance] = useState(0);
 
-  const addTransaction = () => {
-    if (!label || amount === "") return;
-    const newTransaction = {
-      id: Date.now(),
-      label,
-      amount: Number(amount),
-    };
-    setTransactions([...transactions, newTransaction]);
-    setBalance(balance + Number(amount));
-    setLabel("");
+  const addExpense = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !amount) return;
+
+    const newExpense = { id: Date.now(), name, amount: Number(amount) };
+    setExpenses([...expenses, newExpense]);
+    setBalance(balance - Number(amount));
+    setName("");
     setAmount("");
   };
 
-  const removeTransaction = (id: number, amt: number) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
-    setBalance(balance - amt);
+  const resetWallet = () => {
+    setExpenses([]);
+    setBalance(0);
   };
 
   return (
-    <div
-      style={{
-        marginTop: "30px",
-        background: "rgba(255,255,255,0.12)",
-        borderRadius: 12,
-        padding: 24,
-        color: "white",
-        textAlign: "center",
-      }}
-    >
-      <h2>💰 Wallet</h2>
-      <p style={{ opacity: 0.8 }}>Your current balance</p>
-      <h1 style={{ margin: "8px 0", fontSize: "2rem" }}>₹ {balance}</h1>
+    <div className="wallet-container">
+      <h2 className="section-title">💰 Orbi Wallet</h2>
+      <p className="wallet-balance">Current Balance: ₹{balance}</p>
 
-      <div style={{ marginTop: 16 }}>
+      {/* SplitEase Shortcut */}
+      <div className="splitease-link">
+        <p className="split-text">Need to split expenses with friends?</p>
+        <Link to="/splitease" className="btn-mint">
+          🌿 Open SplitEase
+        </Link>
+      </div>
+
+      {/* Expense Form */}
+      <form onSubmit={addExpense} className="wallet-form">
         <input
-          type="text"
-          placeholder="Label (e.g., Lunch, Salary)"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          style={inputStyle}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Expense name"
+          className="wallet-input"
         />
         <input
           type="number"
-          placeholder="Amount"
           value={amount}
           onChange={(e) => setAmount(Number(e.target.value))}
-          style={inputStyle}
+          placeholder="Amount"
+          className="wallet-input"
         />
-        <button onClick={addTransaction} style={btnStyle}>
-          ➕ Add
+        <button type="submit" className="wallet-add">
+          Add
         </button>
-      </div>
+      </form>
 
-      {transactions.length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <h3>📜 Transactions</h3>
-          {transactions.map((t) => (
-            <div
-              key={t.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: 8,
-                background: "rgba(255,255,255,0.15)",
-                padding: "8px 12px",
-                borderRadius: 8,
-              }}
-            >
-              <span>
-                {t.label} — ₹{t.amount}
-              </span>
-              <button
-                onClick={() => removeTransaction(t.id, t.amount)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#ff7070",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                ✖
-              </button>
-            </div>
-          ))}
-        </div>
+      {/* Expense List */}
+      <ul className="wallet-list">
+        {expenses.map((exp) => (
+          <li key={exp.id} className="wallet-item">
+            <span>{exp.name}</span>
+            <span className="wallet-amt">-₹{exp.amount}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* Reset Button */}
+      {expenses.length > 0 && (
+        <button className="wallet-reset" onClick={resetWallet}>
+          Reset Wallet
+        </button>
       )}
     </div>
   );
-};
-
-const inputStyle: React.CSSProperties = {
-  margin: "6px",
-  padding: "8px",
-  borderRadius: "6px",
-  border: "none",
-  outline: "none",
-  fontSize: "14px",
-  width: "40%",
-};
-
-const btnStyle: React.CSSProperties = {
-  padding: "8px 14px",
-  background: "rgba(255,255,255,0.25)",
-  color: "white",
-  border: "none",
-  borderRadius: 12,
-  cursor: "pointer",
-  fontWeight: 600,
 };
 
 export default Wallet;
