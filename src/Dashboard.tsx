@@ -5,6 +5,8 @@ import { auth } from "./firebaseConfig";
 import Tasks from "./Tasks";
 import Profile from "./Profile";
 import Scan from "./Scan";
+import Wallet from "./Wallet";
+import OrbiAvatar from "./components/OrbiAvatar";
 
 type Props = { email?: string | null };
 
@@ -12,12 +14,13 @@ const Dashboard: React.FC<Props> = ({ email }) => {
   const [showTasks, setShowTasks] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showScan, setShowScan] = useState(false);
+  const [showWallet, setShowWallet] = useState(false);
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #C48AF6, #FF71C6)",
+        background: "linear-gradient(135deg, #CA8AF6, #FF1C6C)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -39,47 +42,15 @@ const Dashboard: React.FC<Props> = ({ email }) => {
           minHeight: "520px",
         }}
       >
-        {/* Avatar placeholder */}
-        <div
-          style={{
-            width: 140,
-            height: 140,
-            margin: "0 auto 12px",
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle at 40% 35%, #FFFFFF, #EBD6FF 60%, rgba(255,255,255,0.0) 70%)",
-            position: "relative",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: -8,
-              right: -8,
-              width: 22,
-              height: 22,
-              transform: "rotate(45deg)",
-              background: "#F3C6FF",
-              borderRadius: 4,
-              opacity: 0.9,
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: -10,
-              left: -6,
-              width: 18,
-              height: 18,
-              transform: "rotate(25deg)",
-              background: "#FFD0F0",
-              borderRadius: 4,
-              opacity: 0.9,
-            }}
-          />
+        {/* Header with Avatar */}
+        <div style={{ textAlign: "center", marginBottom: 12 }}>
+          <OrbiAvatar />
+          <h2 style={{ marginTop: 12, fontWeight: 600 }}>Good morning, Syed ✨</h2>
         </div>
 
-        <h1 style={{ margin: "8px 0 0" }}>🌐 Orbi</h1>
+        <h1 style={{ margin: "8px 0 0", fontWeight: 700, fontSize: "2rem" }}>
+          🌐 Orbi
+        </h1>
         <p style={{ margin: "6px 0 18px", opacity: 0.9 }}>
           Your world. One app.
         </p>
@@ -88,7 +59,7 @@ const Dashboard: React.FC<Props> = ({ email }) => {
           {email ? `Signed in as ${email}` : "Welcome!"}
         </p>
 
-        {/* Buttons Grid */}
+        {/* Main Navigation Buttons */}
         <div
           style={{
             display: "grid",
@@ -97,20 +68,22 @@ const Dashboard: React.FC<Props> = ({ email }) => {
             marginTop: 18,
           }}
         >
-          {/* 📝 Tasks Button */}
+          {/* 📝 Tasks */}
           <button style={btn} onClick={() => setShowTasks(!showTasks)}>
             📝 Tasks
           </button>
 
-          {/* 💰 Wallet Button (future) */}
-          <button style={btn}>💰 Wallet</button>
+          {/* 💰 Wallet */}
+          <button style={btn} onClick={() => setShowWallet(!showWallet)}>
+            💰 Wallet
+          </button>
 
-          {/* 📷 Scan Button */}
+          {/* 📷 Scan */}
           <button style={btn} onClick={() => setShowScan(!showScan)}>
             📷 Scan
           </button>
 
-          {/* 👤 Profile Button */}
+          {/* 👤 Profile */}
           <button style={btn} onClick={() => setShowProfile(!showProfile)}>
             👤 Profile
           </button>
@@ -135,10 +108,13 @@ const Dashboard: React.FC<Props> = ({ email }) => {
           </button>
         </div>
 
-        {/* 🧩 Toggle Sections */}
-        {showTasks && <Tasks />}
-        {showProfile && <Profile email={email} />}
-        {showScan && <Scan />}
+        {/* Sections */}
+        <div style={{ marginTop: 20 }}>
+          {showWallet && <Wallet />}
+          {showTasks && <Tasks />}
+          {showProfile && <Profile email={email} />}
+          {showScan && <Scan />}
+        </div>
       </div>
     </div>
   );
@@ -152,7 +128,7 @@ const btn: React.CSSProperties = {
   borderRadius: 12,
   cursor: "pointer",
   fontWeight: 600,
-  transition: "background 0.3s ease",
+  transition: "all 0.3s ease",
 };
 
 export default Dashboard;

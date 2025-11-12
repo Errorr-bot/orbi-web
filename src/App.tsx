@@ -4,6 +4,8 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 import Auth from "./Auth";
 import Dashboard from "./Dashboard";
+import LandingPage from "./LandingPage";
+
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -41,6 +43,9 @@ const App: React.FC = () => {
 
   // If logged in → show Dashboard, else show Auth page
   return user ? <Dashboard email={user.email} /> : <Auth />;
+
+    // 👇 For now, show LandingPage instead of Dashboard/Auth
+  return <LandingPage />;
 };
 
 export default App;

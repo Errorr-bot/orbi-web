@@ -8,10 +8,10 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { getFirestore } from "firebase/firestore";
-import app from "./firebaseConfig";
 
-const db = getFirestore(app);
+import { db } from "./firebaseConfig";
+
+
 
 interface Task {
   id: string;
