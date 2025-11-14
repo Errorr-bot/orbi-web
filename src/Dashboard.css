@@ -1,135 +1,152 @@
-.dashboard-root {
-  position: relative;
+/* Dashboard Mint Edition */
+.dash-root {
   min-height: 100vh;
-  background: linear-gradient(145deg, #fafffa, #d7fff0);
-  display: flex;
-  flex-direction: column;
+  background: linear-gradient(135deg, #f9fffd, #d4fff2);
   font-family: "Poppins", sans-serif;
-  overflow: hidden;
+  color: #004d3a;
+  padding: 40px 20px;
+  text-align: center;
+  animation: fadeIn 0.8s ease-in-out;
 }
 
-/* 🌿 Mint Floating Particles */
-.mint-particles {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  z-index: 0;
-}
-
-.mint-particle {
-  position: absolute;
-  background: radial-gradient(circle, #73ffc4 0%, rgba(115, 255, 196, 0) 70%);
-  border-radius: 50%;
-  filter: blur(2px);
-  opacity: 0.6;
-  transition: all 0.4s ease;
-}
-
-/* Particle hover glow pulse */
-.mint-pulse {
-  filter: blur(2px) drop-shadow(0 0 12px rgba(115, 255, 196, 0.8));
-  transform: scale(1.5);
-  opacity: 1;
-}
-
-/* Navbar */
-.dashboard-nav {
-  z-index: 5;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 30px;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 15px rgba(0, 255, 204, 0.15);
-  border-bottom: 1px solid rgba(0, 255, 204, 0.15);
-  border-radius: 0 0 20px 20px;
-}
-
-.nav-logo {
+.dash-header h2 {
+  font-size: 1.8rem;
   font-weight: 700;
-  color: #007a5c;
-  font-size: 1.25rem;
-  text-shadow: 0 0 6px rgba(0, 255, 204, 0.2);
+  background: linear-gradient(135deg, #00ffc6, #004d3a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.user-email {
-  color: rgba(0, 60, 45, 0.6);
-  font-size: 0.9rem;
-  margin-right: 15px;
+.dash-header p {
+  opacity: 0.8;
+  margin-top: 6px;
+}
+
+.dash-grid {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.dash-card {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 255, 204, 0.08);
+  border-radius: 18px;
+  padding: 30px 20px;
+  box-shadow: 0 6px 18px rgba(0, 255, 204, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dash-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 25px rgba(0, 255, 204, 0.2);
+}
+
+.dash-card h3 {
+  margin: 10px 0 4px;
 }
 
 .logout-btn {
+  margin-top: 50px;
   background: linear-gradient(135deg, #aaffde, #73ffc4);
-  border: none;
-  border-radius: 10px;
-  padding: 7px 16px;
   color: #003d2e;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 3px 10px rgba(0, 255, 204, 0.15);
 }
 
 .logout-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(0, 255, 204, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 255, 204, 0.25);
 }
 
-/* Tabs */
-.tab-bar {
-  z-index: 3;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 25px;
-  gap: 12px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* in Dashboard.css */
+.mint-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #b9ffe8, #ffffff);
+  box-shadow: 0 0 8px #8ffff0;
+}
+/* 🌿 Mint Notification Badge */
+.wallet-card {
+  position: relative;
 }
 
-.tab-btn {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 255, 204, 0.15);
-  border-radius: 14px;
-  padding: 10px 22px;
+.mint-badge {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #b9ffe8, #ffffff);
+  box-shadow: 0 0 8px #8ffff0;
+  animation: pulseBadge 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseBadge {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.7;
+  }
+}
+
+/* 🌸 Mint Toast Popup */
+.mint-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  border-radius: 12px;
+  padding: 14px 26px;
+  box-shadow: 0 6px 22px rgba(0, 255, 204, 0.25);
+  color: #004d3a;
   font-weight: 500;
-  color: #004733;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 3px 10px rgba(0, 255, 204, 0.1);
+  font-size: 0.95rem;
+  animation: fadeSlideUp 0.6s ease, fadeOut 1s ease 6s forwards;
+  z-index: 1000;
 }
 
-.tab-btn:hover {
-  background: rgba(255, 255, 255, 0.85);
-  transform: translateY(-2px);
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 30px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
-.tab-btn.active {
-  background: linear-gradient(135deg, #aaffde, #73ffc4);
-  color: #003d2e;
-  font-weight: 600;
-  box-shadow: 0 3px 10px rgba(0, 255, 204, 0.25);
-}
-
-/* Content area */
-.dashboard-content {
-  z-index: 2;
-  flex-grow: 1;
-  padding: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  overflow-x: hidden;
-}
-
-/* Main container */
-.fade-section {
-  width: 100%;
-  max-width: 900px;
-  background: rgba(255, 255, 255, 0.55);
-  border-radius: 20px;
-  padding: 20px;
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 255, 204, 0.15);
-  box-shadow: 0 4px 25px rgba(0, 255, 204, 0.1);
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
 }

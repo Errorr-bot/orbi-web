@@ -1,67 +1,208 @@
-.profile-container {
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(0, 255, 204, 0.2);
-  border-radius: 18px;
-  padding: 20px;
-  text-align: center;
-  width: 80%;
-  margin: 20px auto;
-  box-shadow: 0 4px 25px rgba(0, 255, 204, 0.1);
-}
-
-.profile-img {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  margin-bottom: 10px;
-  filter: drop-shadow(0 0 15px rgba(0, 255, 204, 0.4));
-}
-
-.profile-name {
-  font-weight: 600;
+.profile-root {
+  background: linear-gradient(135deg, #f9fffd, #d4fff2);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Poppins", sans-serif;
   color: #003d2e;
 }
 
-.profile-bio {
-  color: rgba(0, 60, 45, 0.7);
-  margin-bottom: 8px;
+.profile-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 255, 204, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 255, 204, 0.15);
+  padding: 30px;
+  text-align: center;
+  width: 400px;
 }
 
-.profile-edit,
-.profile-save {
+.profile-info {
+  margin: 20px 0;
+  text-align: left;
+  line-height: 1.8;
+}
+
+.mint-btn {
   background: linear-gradient(135deg, #aaffde, #73ffc4);
   border: none;
   border-radius: 12px;
-  padding: 6px 14px;
+  padding: 10px 20px;
   font-weight: 600;
-  color: #003d2e;
   cursor: pointer;
+  color: #003d2e;
+  transition: all 0.3s ease;
 }
 
-.profile-input,
-.profile-textarea {
+.mint-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(0, 255, 204, 0.25);
+}
+/* src/Profile.css */
+
+.profile-root {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding-top: 80px;
+  background: #f6fffb;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+  border-radius: 18px;
+}
+
+.profile-card {
+  width: 90%;
+  max-width: 460px;
+  padding: 28px;
+  border-radius: 18px;
+  text-align: center;
+}
+
+.profile-card h2 {
+  margin-bottom: 6px;
+}
+
+.muted {
+  opacity: 0.7;
+  margin-bottom: 18px;
+}
+
+.profile-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-fields input {
+  padding: 11px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(0, 255, 204, 0.3);
-  background: rgba(255, 255, 255, 0.8);
-  padding: 8px 10px;
-  margin: 5px 0;
-  width: 100%;
+  border: 1px solid #cceee1;
+  outline: none;
+  background: #ffffff;
+  font-size: 15px;
 }
 
-.xp-bar-wrap {
-  width: 80%;
-  margin: 10px auto 0;
+.profile-fields input:focus {
+  border-color: #0abf74;
 }
 
-.xp-bar {
-  width: 100%;
-  height: 10px;
-  background: rgba(0, 255, 204, 0.15);
-  border-radius: 6px;
+.mint-btn {
+  padding: 12px;
+  margin-top: 10px;
+  background: #0abf74;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.mint-btn:hover {
+  background: #089b60;
+}
+
+.status-msg {
+  margin-top: 12px;
+  color: #0abf74;
+  font-weight: bold;
+}
+
+.upi-status {
+  color: #0abf74;
+  font-weight: 600;
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.check {
+  margin-right: 6px;
+  color: #0abf74;
+}
+/* ===================================================
+   🌿 ORBI MINT BACK BUTTON (Same as SplitEase style)
+   =================================================== */
+
+.mint-back-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid rgba(0, 255, 204, 0.3);
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 255, 204, 0.15);
+  z-index: 1000;
   overflow: hidden;
 }
 
-.xp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00ffc6, #aaffde);
+.mint-back-btn .arrow {
+  background: linear-gradient(135deg, #b9ffe8, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transform: rotate(8deg);
+  font-weight: bold;
+}
+
+.mint-back-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 14px rgba(0, 255, 204, 0.3);
+}
+
+.mint-back-btn.ripple::after {
+  content: "";
+  position: absolute;
+  width: 180%;
+  height: 180%;
+  background: radial-gradient(circle, rgba(185, 255, 232, 0.5), transparent 80%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: mintRipple 0.6s ease;
+  border-radius: 50%;
+}
+
+@keyframes mintRipple {
+  from {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+}
+
+/* Tooltip beside back button */
+.mint-back-btn .tooltip {
+  position: absolute;
+  left: 65px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: #004d3a;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 255, 204, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mint-back-btn:hover .tooltip {
+  opacity: 1;
 }

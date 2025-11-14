@@ -144,3 +144,153 @@
   background: rgba(0, 255, 204, 0.15);
   transform: scale(1.05);
 }
+
+/* Mint toast notification */
+.mint-toast {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 14px 22px;
+  box-shadow: 0 8px 20px rgba(0, 255, 204, 0.25);
+  color: #004d3a;
+  font-weight: 500;
+  animation: fadeSlide 8s ease-in-out forwards;
+  z-index: 999;
+}
+
+@keyframes fadeSlide {
+  0% { opacity: 0; transform: translate(-50%, 20px); }
+  10% { opacity: 1; transform: translate(-50%, 0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, 20px); }
+}
+/* 🌿 SplitEase Access Button */
+.splitease-access {
+  text-align: center;
+  margin-top: 25px;
+}
+
+.splitease-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #b9ffe8, #eafff8);
+  color: #004d3a;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  box-shadow: 0 4px 18px rgba(0, 255, 204, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.splitease-btn::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent 70%);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: width 0.6s ease, height 0.6s ease, opacity 0.4s ease;
+}
+
+.splitease-btn:hover::before {
+  width: 300%;
+  height: 300%;
+  opacity: 0.6;
+}
+
+.splitease-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 255, 204, 0.3);
+  color: #003a2b;
+}
+/* ===================================================
+   🌿 ORBI MINT BACK BUTTON (Same as SplitEase style)
+   =================================================== */
+
+.mint-back-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid rgba(0, 255, 204, 0.3);
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 255, 204, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.mint-back-btn .arrow {
+  background: linear-gradient(135deg, #b9ffe8, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transform: rotate(8deg);
+  font-weight: bold;
+}
+
+.mint-back-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 14px rgba(0, 255, 204, 0.3);
+}
+
+.mint-back-btn.ripple::after {
+  content: "";
+  position: absolute;
+  width: 180%;
+  height: 180%;
+  background: radial-gradient(circle, rgba(185, 255, 232, 0.5), transparent 80%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: mintRipple 0.6s ease;
+  border-radius: 50%;
+}
+
+@keyframes mintRipple {
+  from {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+}
+
+/* Tooltip beside back button */
+.mint-back-btn .tooltip {
+  position: absolute;
+  left: 65px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: #004d3a;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 255, 204, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mint-back-btn:hover .tooltip {
+  opacity: 1;
+}

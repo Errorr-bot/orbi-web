@@ -1,5 +1,7 @@
+// src/Wallet.tsx
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import "./Wallet.css";
 
 interface Expense {
@@ -9,6 +11,8 @@ interface Expense {
 }
 
 const Wallet: React.FC = () => {
+  const navigate = useNavigate();
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState<number | "">("");
@@ -31,19 +35,31 @@ const Wallet: React.FC = () => {
   };
 
   return (
-    <div className="wallet-container">
+    <motion.div
+      className="wallet-container"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -30 }}
+      transition={{ duration: 0.6, ease: "easeInOut" }}
+    >
+
+      {/* 🌿 Mint Back Button */}
+      <button
+        className="mint-back-btn"
+        onClick={() => {
+          const btn = document.querySelector(".mint-back-btn");
+          btn?.classList.add("ripple");
+          setTimeout(() => btn?.classList.remove("ripple"), 500);
+          setTimeout(() => navigate("/dashboard"), 250);
+        }}
+      >
+        <span className="arrow">←</span>
+        <span className="tooltip">Back to Dashboard</span>
+      </button>
+
       <h2 className="section-title">💰 Orbi Wallet</h2>
-      <p className="wallet-balance">Current Balance: ₹{balance}</p>
+      <p className="wallet-balance">Balance: ₹{balance}</p>
 
-      {/* SplitEase Shortcut */}
-      <div className="splitease-link">
-        <p className="split-text">Need to split expenses with friends?</p>
-        <Link to="/splitease" className="btn-mint">
-          🌿 Open SplitEase
-        </Link>
-      </div>
-
-      {/* Expense Form */}
       <form onSubmit={addExpense} className="wallet-form">
         <input
           value={name}
@@ -63,7 +79,6 @@ const Wallet: React.FC = () => {
         </button>
       </form>
 
-      {/* Expense List */}
       <ul className="wallet-list">
         {expenses.map((exp) => (
           <li key={exp.id} className="wallet-item">
@@ -73,13 +88,19 @@ const Wallet: React.FC = () => {
         ))}
       </ul>
 
-      {/* Reset Button */}
       {expenses.length > 0 && (
         <button className="wallet-reset" onClick={resetWallet}>
-          Reset Wallet
+          Reset
         </button>
       )}
-    </div>
+
+      {/* SplitEase Access Button */}
+      <div className="splitease-access">
+        <Link to="/splitease" className="splitease-btn">
+          💸 Open SplitEase
+        </Link>
+      </div>
+    </motion.div>
   );
 };
 

@@ -8,11 +8,16 @@ import { auth } from "./firebaseConfig";
 import LandingPage from "./LandingPage";
 import Auth from "./Auth";
 import Dashboard from "./Dashboard";
-import SplitEase from "./SplitEase"; // ✅ new feature
+import Tasks from "./Tasks";
+import Wallet from "./Wallet";
+import Scan from "./Scan";
+import Profile from "./Profile";
+import SplitEase from "./SplitEase";
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+< Route path="/splitease" element={<SplitEase />} />
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -55,33 +60,47 @@ const AnimatedRoutes: React.FC<{ user: User | null }> = ({ user }) => {
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, x: 80 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -80 }}
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.98 }}
         transition={{ duration: 0.6, ease: "easeInOut" }}
         style={{ position: "relative" }}
       >
         <Routes location={location}>
-          {/* 🌿 Public Pages */}
+          {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Auth mode="login" />} />
           <Route path="/signup" element={<Auth mode="signup" />} />
 
-          {/* 🌿 Protected Pages */}
+          {/* Protected Pages */}
           <Route
             path="/dashboard"
             element={<Dashboard email={user?.email || ""} />}
           />
-          <Route path="/splitease" element={<SplitEase />} /> {/* ✅ New Route */}
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/scan" element={<Scan />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/splitease" element={<SplitEase />} />
         </Routes>
 
-        {/* Mint wave transition overlay */}
+        {/* Mint overlay transition (subtle wave between pages) */}
         <motion.div
           className="mint-transition"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 0 }}
           exit={{ scaleX: 1 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "linear-gradient(135deg, #d4fff2, #f9fffd)",
+            transformOrigin: "right",
+            zIndex: 1000,
+          }}
         />
       </motion.div>
     </AnimatePresence>

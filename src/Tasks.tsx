@@ -1,3 +1,4 @@
+// src/Tasks.tsx
 import React, { useEffect, useState } from "react";
 import {
   collection,
@@ -9,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import "./Tasks.css";
+import { useNavigate } from "react-router-dom";
 
 interface Task {
   id: string;
@@ -19,6 +21,7 @@ interface Task {
 const Tasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "tasks"), (snapshot) => {
@@ -34,13 +37,15 @@ const Tasks: React.FC = () => {
   const addTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.trim()) return;
-    await addDoc(collection(db, "tasks"), { text: newTask, completed: false });
+    await addDoc(collection(db, "tasks"), {
+      text: newTask,
+      completed: false,
+    });
     setNewTask("");
   };
 
   const toggleComplete = async (id: string, completed: boolean) => {
-    const taskRef = doc(db, "tasks", id);
-    await updateDoc(taskRef, { completed: !completed });
+    await updateDoc(doc(db, "tasks", id), { completed: !completed });
   };
 
   const deleteTask = async (id: string) => {
@@ -49,45 +54,46 @@ const Tasks: React.FC = () => {
 
   return (
     <div className="tasks-container">
-      <h2 className="section-title">📝 Tasks</h2>
+
+      {/* 🌿 Mint Back Button */}
+      <button
+        className="mint-back-btn"
+        onClick={() => {
+          const btn = document.querySelector(".mint-back-btn");
+          btn?.classList.add("ripple");
+          setTimeout(() => btn?.classList.remove("ripple"), 500);
+          setTimeout(() => navigate("/dashboard"), 250);
+        }}
+      >
+        <span className="arrow">←</span>
+        <span className="tooltip">Back to Dashboard</span>
+      </button>
+
+      <h2>📝 Orbi Tasks</h2>
 
       <form onSubmit={addTask} className="task-form">
         <input
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           placeholder="Add a new task..."
-          className="task-input"
         />
-        <button type="submit" className="task-add-btn">
+        <button type="submit" className="mint-btn">
           Add
         </button>
       </form>
 
       <ul className="task-list">
         {tasks.map((task) => (
-          <li
-            key={task.id}
-            className={`task-item ${task.completed ? "completed" : ""}`}
-          >
-            <span
-              onClick={() => toggleComplete(task.id, task.completed)}
-              className="task-text"
-            >
+          <li key={task.id} className={task.completed ? "done" : ""}>
+            <span onClick={() => toggleComplete(task.id, task.completed)}>
               {task.text}
             </span>
-            <button
-              onClick={() => deleteTask(task.id)}
-              className="task-delete"
-            >
-              ✖
-            </button>
+            <button onClick={() => deleteTask(task.id)}>✖</button>
           </li>
         ))}
       </ul>
 
-      {tasks.length === 0 && (
-        <p className="task-empty">No tasks yet — add one above 🌱</p>
-      )}
+      {tasks.length === 0 && <p>No tasks yet — add one above 🌱</p>}
     </div>
   );
 };

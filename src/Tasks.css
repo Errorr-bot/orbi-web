@@ -1,98 +1,141 @@
 .tasks-container {
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(0, 255, 204, 0.25);
-  border-radius: 20px;
-  padding: 25px;
-  margin: 25px auto;
-  width: 80%;
-  box-shadow: 0 8px 25px rgba(0, 255, 204, 0.12);
-  backdrop-filter: blur(12px);
-}
-
-.section-title {
+  background: linear-gradient(135deg, #f9fffd, #d4fff2);
+  min-height: 100vh;
+  color: #003d2e;
+  font-family: "Poppins", sans-serif;
+  padding: 30px;
   text-align: center;
-  color: #004b38;
-  margin-bottom: 16px;
 }
 
 .task-form {
+  margin: 20px auto;
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 20px;
 }
 
-.task-input {
-  padding: 10px 14px;
+.task-form input {
+  width: 60%;
+  padding: 10px;
   border-radius: 10px;
   border: 1px solid rgba(0, 255, 204, 0.25);
-  background: rgba(255, 255, 255, 0.9);
-  width: 60%;
-  outline: none;
-  transition: 0.3s ease;
+  background: rgba(255, 255, 255, 0.8);
 }
 
-.task-input:focus {
-  border-color: rgba(0, 255, 204, 0.5);
-  box-shadow: 0 0 8px rgba(0, 255, 204, 0.2);
-}
-
-.task-add-btn {
+.mint-btn {
   background: linear-gradient(135deg, #aaffde, #73ffc4);
   border: none;
   border-radius: 10px;
-  padding: 10px 20px;
+  padding: 10px 18px;
   color: #003d2e;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.task-add-btn:hover {
+.mint-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
 }
 
 .task-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin-top: 20px;
 }
 
-.task-item {
-  display: flex;
-  justify-content: space-between;
-  background: rgba(255, 255, 255, 0.55);
+.task-list li {
+  background: rgba(255, 255, 255, 0.65);
   border-left: 4px solid #00ffc6;
   border-radius: 10px;
-  padding: 10px 14px;
-  margin: 8px 0;
-  color: #004b38;
-  font-weight: 500;
-  transition: 0.3s ease;
+  margin: 10px auto;
+  padding: 12px 16px;
+  width: 70%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.task-item:hover {
-  transform: translateX(3px);
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.task-item.completed .task-text {
+.task-list li.done span {
   text-decoration: line-through;
-  color: #888;
+  opacity: 0.7;
 }
+/* ===================================================
+   🌿 ORBI MINT BACK BUTTON (Matches all other pages)
+   =================================================== */
 
-.task-delete {
-  background: transparent;
-  border: none;
-  color: #b5002d;
-  font-size: 1.1rem;
+.mint-back-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid rgba(0, 255, 204, 0.3);
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 255, 204, 0.15);
+  z-index: 1000;
+  overflow: hidden;
 }
 
-.task-empty {
-  text-align: center;
-  color: #004b38;
-  opacity: 0.8;
-  margin-top: 10px;
+.mint-back-btn .arrow {
+  background: linear-gradient(135deg, #b9ffe8, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transform: rotate(8deg);
+  font-weight: bold;
+}
+
+.mint-back-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 14px rgba(0, 255, 204, 0.3);
+}
+
+.mint-back-btn.ripple::after {
+  content: "";
+  position: absolute;
+  width: 180%;
+  height: 180%;
+  background: radial-gradient(circle, rgba(185, 255, 232, 0.5), transparent 80%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: mintRipple 0.6s ease;
+  border-radius: 50%;
+}
+
+@keyframes mintRipple {
+  from {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+}
+
+.mint-back-btn .tooltip {
+  position: absolute;
+  left: 65px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: #004d3a;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 255, 204, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mint-back-btn:hover .tooltip {
+  opacity: 1;
 }
