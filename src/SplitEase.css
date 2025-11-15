@@ -1,3 +1,4 @@
+/* src/SplitEase.css */
 /* ==============================
    SplitEase — Orbi Mint (clean)
    Single-file, optimized
@@ -35,6 +36,48 @@ body{
 /* ---------- Header ---------- */
 .split-header h2{ margin:0 0 6px 0; font-size:1.4rem; }
 .muted{ color:var(--muted); font-size:0.95rem; }
+
+/* notification bell */
+.noti-bell{
+  position:relative;
+  padding:8px 12px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#f8fffb,#eafff8);
+  border:1px solid rgba(0,255,204,0.12);
+  cursor:pointer;
+}
+.noti-bell .badge{
+  background:#ff4757;
+  color:#fff;
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+  margin-left:6px;
+  font-size:0.85rem;
+}
+
+/* notification dropdown */
+.notif-dropdown{
+  position:absolute;
+  right:24px;
+  top:64px;
+  width:320px;
+  background:var(--glass);
+  border-radius:10px;
+  box-shadow:0 18px 50px rgba(3,80,60,0.12);
+  border:1px solid rgba(0,0,0,0.06);
+  z-index:110;
+  overflow:hidden;
+}
+.notif-row{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  border-bottom:1px solid rgba(0,0,0,0.04);
+  align-items:center;
+}
+.notif-row.unread{ background: linear-gradient(90deg, rgba(255,255,255,0.96), rgba(235,255,245,0.96)); }
+.notif-row .tiny{ padding:6px 8px; border-radius:8px; }
 
 /* ---------- Create group / Chips ---------- */
 .split-create{
@@ -233,7 +276,7 @@ body{
   position:fixed; inset:0;
   display:flex; justify-content:center; align-items:center;
   backdrop-filter:blur(6px);
-  background:rgba(0,0,0,0.25);
+  background:rgba(0,0,0,0.12);
   z-index:90;
 }
 .mint-modal-card{
@@ -246,97 +289,46 @@ body{
 }
 .qr-wrap{ padding:10px; background:#f8fffb; border-radius:12px; }
 
-/* ---------- Back Button (Orbi Mint Style — Same as Wallet) ---------- */
-.back-btn {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1.5px solid rgba(0, 255, 204, 0.3);
-  border-radius: 50%;
-  width: 52px;
-  height: 52px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 255, 204, 0.15);
-  z-index: 1000;
-  overflow: hidden;
+/* ---------- Back Button (mint style like wallet) ---------- */
+.back-btn.mint-back{
+  position:fixed; top:18px; left:18px;
+  width:52px; height:52px;
+  border-radius:999px;
+  background: rgba(255,255,255,0.85);
+  border: 1.5px solid rgba(0,255,204,0.25);
+  box-shadow:0 8px 30px rgba(0,255,204,0.08);
+  display:flex; justify-content:center; align-items:center;
+  cursor:pointer;
+  z-index:100;
+  transition:.2s ease;
 }
+.back-btn.mint-back:hover{ transform:scale(1.05); }
+.back-btn.mint-back .arrow{ font-size:18px; color:#036047; }
 
-.back-btn .arrow {
-  background: linear-gradient(135deg, #b9ffe8, #ffffff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  transform: rotate(8deg);
-  font-weight: bold;
+.back-btn .tooltip{
+  position:absolute; left:65px; top:50%;
+  transform:translateY(-50%);
+  background: rgba(255,255,255,0.95);
+  color:#004d3a;
+  font-size:.85rem;
+  padding:6px 10px;
+  border-radius:8px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.06);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .18s ease, transform .18s ease;
 }
-
-.back-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 14px rgba(0, 255, 204, 0.3);
-}
-
-/* Ripple animation */
-.back-btn.ripple::after {
-  content: "";
-  position: absolute;
-  width: 180%;
-  height: 180%;
-  background: radial-gradient(circle, rgba(185, 255, 232, 0.5), transparent 80%);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation: mintRipple 0.6s ease;
-  border-radius: 50%;
-}
-
-@keyframes mintRipple {
-  from {
-    opacity: 0.7;
-    transform: translate(-50%, -50%) scale(0.6);
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1.4);
-  }
-}
-
-/* Tooltip */
-.back-btn .tooltip {
-  position: absolute;
-  left: 65px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.9);
-  color: #004d3a;
-  font-size: 0.85rem;
-  padding: 6px 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 255, 204, 0.15);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.back-btn:hover .tooltip {
-  opacity: 1;
-}
-
+.back-btn.mint-back:hover .tooltip{ opacity:1; transform:translateY(-50%) translateX(0); }
 
 /* ripple */
 .back-btn.ripple::after{
-  content:""; position:absolute; inset:0;
-  border-radius:999px;
-  background: radial-gradient(circle,rgba(183,255,237,0.45),transparent 50%);
-  animation:ripple .6s ease-out;
+  content:""; position:absolute; width:180%; height:180%; left:-40%; top:-40%; border-radius:50%;
+  background: radial-gradient(circle, rgba(183,255,237,0.45) 0%, transparent 60%);
+  animation:mintRipple .6s ease;
 }
-@keyframes ripple{
-  0%{transform:scale(0.2); opacity:1;}
-  100%{transform:scale(1.4); opacity:0;}
+@keyframes mintRipple{
+  from{ opacity:.8; transform:scale(.4) }
+  to{ opacity:0; transform:scale(1.25) }
 }
 
 /* ---------- Flyout ---------- */

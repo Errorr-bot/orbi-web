@@ -13,6 +13,7 @@ import {
   orderBy,
   deleteDoc,
   updateDoc,
+  setDoc,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -75,7 +76,7 @@ const SplitEase: React.FC = () => {
   const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
 
   // member profile cache
-  const [memberProfiles, setMemberProfiles] = useState<Record<string, { email?: string; upi?: string }>>({});
+  const [memberProfiles, setMemberProfiles] = useState<Record<string, { email?: string; upi?: string; phone?: string }>>({});
 
   // flyout
   const [openFlyoutId, setOpenFlyoutId] = useState<string | null>(null);
@@ -84,6 +85,11 @@ const SplitEase: React.FC = () => {
   const flyoutRef = useRef<HTMLDivElement | null>(null);
 
   const currentUserProfileRef = useRef<any | null>(null);
+
+  // notifications (inbox) for current user
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [notifList, setNotifList] = useState<any[]>([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   // -----------------------
   // Firestore listeners
@@ -117,9 +123,7 @@ const SplitEase: React.FC = () => {
     };
   }, [selectedGroup]);
 
-  // -----------------------------
-  // FIX #1 — correct useEffect cleanup
-  // -----------------------------
+  // load current user's profile once
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -132,31 +136,22 @@ const SplitEase: React.FC = () => {
         currentUserProfileRef.current = null;
       }
     })();
-
-    // ❗ FIXED RETURN
     return () => {
       mounted = false;
     };
   }, [user]);
 
-  // -----------------------------
-  // FIX #2 — correct useEffect cleanup
-  // -----------------------------
+  // fetch profiles for members (email -> profiles)
   useEffect(() => {
     let mounted = true;
-
     if (!members || members.length === 0) {
       setMemberProfiles({});
-
-      // ❗ FIXED RETURN
       return () => {
         mounted = false;
       };
     }
-
     (async () => {
-      const map: Record<string, { email?: string; upi?: string }> = {};
-
+      const map: Record<string, { email?: string; upi?: string; phone?: string }> = {};
       await Promise.all(
         members.map(async (m) => {
           if (m.email) {
@@ -165,47 +160,50 @@ const SplitEase: React.FC = () => {
               const snap = await getDocs(q);
               if (snap.docs.length > 0) {
                 const data = snap.docs[0].data() as any;
-                map[m.id] = { email: data.email, upi: data.upi };
+                map[m.id] = { email: data.email, upi: data.upi, phone: data.phone };
                 return;
               }
             } catch {}
           }
-          map[m.id] = { email: m.email || undefined, upi: undefined };
+          map[m.id] = { email: m.email || undefined, upi: undefined, phone: undefined };
         })
       );
-
       if (!mounted) return;
       setMemberProfiles(map);
 
-      // auto-link
+      // auto-link if current user's profile matches a member name
       try {
         const cur = currentUserProfileRef.current;
         if (cur?.email) {
           for (const m of members) {
-            if (
-              (!m.email || m.email.trim() === "") &&
-              m.name.trim().toLowerCase() === (cur.name || "").trim().toLowerCase()
-            ) {
+            if ((!m.email || m.email.trim() === "") && m.name.trim().toLowerCase() === (cur.name || "").trim().toLowerCase()) {
               await updateDoc(doc(db, "groups", selectedGroup!.id, "members", m.id), { email: cur.email });
-              setMemberProfiles((p) => ({ ...p, [m.id]: { email: cur.email, upi: cur.upi } }));
+              setMemberProfiles((p) => ({ ...p, [m.id]: { email: cur.email, upi: cur.upi, phone: cur.phone } }));
             }
           }
         }
       } catch {}
     })();
-
-    // ❗ FIXED RETURN
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, [members, selectedGroup]);
 
-  // -----------------------
-  // REST OF YOUR FILE BELOW (UNCHANGED)
-  // -----------------------
-
-  // ⚠️ I am NOT rewriting the rest here again because it was unchanged.
-  // Copy your original code starting from here DOWNWARD.
+  // listen to notifications for current user (unread count)
+  useEffect(() => {
+    if (!user?.email) {
+      setUnreadCount(0);
+      setNotifList([]);
+      return;
+    }
+    const notifRef = collection(db, "notifications");
+    const q = query(notifRef, where("to", "==", user.email), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const docs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      const unread = docs.filter((n) => n.status === "unread").length;
+      setUnreadCount(unread);
+      setNotifList(docs.slice(0, 20));
+    });
+    return () => unsub();
+  }, [user?.email]);
 
   // -----------------------
   // helpers: groups / members / expenses
@@ -296,40 +294,94 @@ const SplitEase: React.FC = () => {
     }
   };
 
+  // helper: create notification doc (in-app)
+  const createNotificationDoc = async (payload: {
+    from?: string;
+    to: string;
+    amount?: number;
+    message?: string;
+    groupId?: string | null;
+    upiLink?: string | null;
+    repeated?: boolean;
+  }) => {
+    await addDoc(collection(db, "notifications"), {
+      from: payload.from || (user?.email || "system"),
+      to: payload.to,
+      amount: payload.amount || 0,
+      message: payload.message || "",
+      groupId: payload.groupId || null,
+      upiLink: payload.upiLink || null,
+      repeated: !!payload.repeated,
+      isPaid: false,
+      status: "unread",
+      createdAt: Timestamp.now(),
+    });
+  };
+
+  // send SMS via your server endpoint (see example server code below)
+  // We call '/api/send-sms' with JSON body { phone, text, qrLink (optional) }
+  const sendSmsViaApi = async (phone: string, text: string, qrLink?: string) => {
+    try {
+      await fetch("/api/send-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, text, qrLink }),
+      });
+      return true;
+    } catch (err) {
+      console.warn("sendSms error", err);
+      return false;
+    }
+  };
+
   const sendNotification = async (member: Member, amount: number) => {
     if (!user?.email) return alert("You must be logged in");
     if (!selectedGroup) return;
-    const profile = await findProfileByEmail(member.email);
-    const upi = profile?.upi || null;
-    if (!upi) {
-      setToast("Recipient has no UPI on file.");
-      setTimeout(() => setToast(null), 3000);
-      await addDoc(collection(db, "notifications"), {
-        from: user.email,
+    // find profile (we may already have it in cache)
+    const prof = memberProfiles[member.id] || (member.email ? await findProfileByEmail(member.email) : null);
+    const upi = prof?.upi || null;
+    const phone = prof?.phone || null;
+    const message = `You owe ${user.email?.split("@")[0] || "someone"} ₹${amount} • ${selectedGroup.name || ""}`;
+
+    // Always create in-app notification (so recipient sees it in the app)
+    try {
+      await createNotificationDoc({
+        from: user.email!,
         to: member.email || "unknown",
         amount,
-        message: `You owe ₹${amount}`,
+        message,
         groupId: selectedGroup.id,
-        upiLink: null,
-        createdAt: Timestamp.now(),
-        status: "unread",
+        upiLink: upi ? buildUpiLink(upi, member.name, amount) : null,
       });
+    } catch (err) {
+      console.error("createNotificationDoc failed", err);
+    }
+
+    // If recipient has no UPI, show a toast and don't open blocking QR modal
+    if (!upi) {
+      setToast("Recipient has no UPI on file — sent in-app notification.");
       setNotifyAnim(true);
       setTimeout(() => setNotifyAnim(false), 700);
       playSound();
+
+      // If they have a phone, attempt SMS
+      if (phone) {
+        const smsText = `Pay ${member.name}\nAmount: ₹${amount}\nFor: ${selectedGroup.name || "debt"}\nUPI: (not available)\nThanks!`;
+        await sendSmsViaApi(phone, smsText, null);
+      }
+      // clear toast soon
+      setTimeout(() => setToast(null), 2800);
       return;
     }
+
+    // If UPI exists, build link and show QR modal + attempt SMS if phone available
     const link = buildUpiLink(upi, member.name, amount);
-    await addDoc(collection(db, "notifications"), {
-      from: user.email,
-      to: member.email || "unknown",
-      amount,
-      message: `You owe ₹${amount}`,
-      groupId: selectedGroup.id,
-      upiLink: link,
-      createdAt: Timestamp.now(),
-      status: "unread",
-    });
+
+    // create notification with link (already created above but update here optionally)
+    try {
+      // optional additional doc or update not required
+    } catch {}
+
     setQrMsg(`Notification sent to ${member.name}`);
     setQrLink(link);
     setShowQR(true);
@@ -337,14 +389,37 @@ const SplitEase: React.FC = () => {
     setNotifyAnim(true);
     setTimeout(() => setNotifyAnim(false), 700);
     playSound();
+
+    // If phone exists, try to send SMS with QR link
+    if (phone) {
+      const smsText = `Pay ${member.name}\nAmount: ₹${amount}\nFor: ${selectedGroup.name || "debt"}\nUPI: ${upi}\nScan QR or open link: (link included)`;
+      await sendSmsViaApi(phone, smsText, link);
+    }
+
     setTimeout(() => setToast(null), 7000);
-    setTimeout(() => setShowQR(false), 3000);
+    // hide QR after a short while
+    setTimeout(() => setShowQR(false), 3500);
   };
 
-  const remindMember = (m: Member, amount: number) => {
+  const remindMember = async (m: Member, amount: number) => {
+    if (!user?.email) return alert("You must be logged in");
+    if (!selectedGroup) return;
     setRemindAnim(true);
     setTimeout(() => setRemindAnim(false), 800);
-    sendNotification(m, amount);
+
+    // create repeated reminder notification
+    await createNotificationDoc({
+      from: user.email,
+      to: m.email || "unknown",
+      amount,
+      message: `Reminder: please pay ${user.email?.split("@")[0] || "someone"} ₹${amount} for ${selectedGroup?.name || ""}`,
+      groupId: selectedGroup?.id || null,
+      upiLink: null,
+      repeated: true,
+    });
+
+    setToast("Reminder created (in-app).");
+    setTimeout(() => setToast(null), 2200);
   };
 
   // -----------------------
@@ -452,15 +527,35 @@ const SplitEase: React.FC = () => {
     setTimeout(() => setToast(null), ms);
   };
 
+  // mark notification as read
+  const markNotifRead = async (id: string) => {
+    try {
+      await updateDoc(doc(db, "notifications", id), { status: "read" });
+    } catch (err) {
+      console.warn("markNotifRead error", err);
+    }
+  };
+
+  // mark as paid (if you want)
+  const markNotifPaid = async (id: string) => {
+    try {
+      await updateDoc(doc(db, "notifications", id), { isPaid: true, status: "read" });
+    } catch (err) {
+      console.warn("markNotifPaid error", err);
+    }
+  };
+
   // -----------------------
   // render
   // -----------------------
   return (
     <motion.div className="split-root" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+      {/* toast */}
       {toast && <div className="mint-toast" role="status" aria-live="polite">{toast}</div>}
 
+      {/* back button (keeps same mint style as wallet) */}
       <button
-        className="back-btn"
+        className="back-btn mint-back"
         onClick={() => {
           const btn = document.querySelector(".back-btn");
           if (btn) { btn.classList.add("ripple"); setTimeout(() => btn.classList.remove("ripple"), 500); }
@@ -472,9 +567,35 @@ const SplitEase: React.FC = () => {
       </button>
 
       <div className="split-wrap">
-        <header className="split-header">
-          <h2>SplitEase — Group Expense Splitter</h2>
-          <p className="muted">Create groups, add members, and track expenses effortlessly.</p>
+        <header className="split-header" style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "space-between" }}>
+          <div>
+            <h2>SplitEase — Group Expense Splitter</h2>
+            <p className="muted">Create groups, add members, and track expenses effortlessly.</p>
+          </div>
+
+          {/* Notification bell */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button className="btn noti-bell" onClick={() => setShowNotifDropdown((s) => !s)} aria-haspopup="true" aria-expanded={showNotifDropdown}>
+              🔔 {unreadCount > 0 ? <span className="badge">{unreadCount}</span> : null}
+            </button>
+            {showNotifDropdown && (
+              <div className="notif-dropdown" role="menu" aria-label="Notifications">
+                {notifList.length === 0 && <div className="muted small" style={{ padding: 10 }}>No notifications</div>}
+                {notifList.map((n) => (
+                  <div key={n.id} className={`notif-row ${n.status === "unread" ? "unread" : ""}`}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700 }}>{n.message || "Payment reminder"}</div>
+                      <div className="muted small">{n.amount ? `₹${n.amount}` : ""} • {n.from}</div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <button className="tiny" onClick={() => { markNotifRead(n.id); }}>Mark read</button>
+                      {!n.isPaid && <button className="tiny" onClick={() => { markNotifPaid(n.id); triggerToast("Marked paid"); }}>Mark paid</button>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </header>
 
         <section className="split-create">
@@ -545,6 +666,7 @@ const SplitEase: React.FC = () => {
                             <strong className="member-name">{m.name}</strong>
                             <div className="muted small">
                               {prof?.upi ? <span className="upi-badge">UPI linked</span> : null}
+                              {prof?.phone ? <span style={{ marginLeft: 8 }}>📱 {prof.phone}</span> : null}
                               {prof?.email ? <span style={{ marginLeft: 8 }}>{prof.email}</span> : null}
                             </div>
                           </div>
@@ -686,6 +808,7 @@ const SplitEase: React.FC = () => {
                         <div className="flyout-label">Status</div>
                         <div style={{ fontWeight: 700 }}>{prof?.upi ? "UPI linked" : "No UPI"}</div>
                       </div>
+                      {prof?.phone && <div style={{ marginTop: 2 }}><strong>Phone:</strong> {prof.phone}</div>}
                       {memberSince && (
                         <div style={{ marginTop: 6, color: "rgba(2,40,30,0.6)", fontSize: 13 }}>Member since: {memberSince}</div>
                       )}
@@ -716,13 +839,13 @@ const SplitEase: React.FC = () => {
           </motion.div>
         )}
 
-        {/* QR modal */}
+        {/* QR modal (only when link exists) */}
         {showQR && qrLink && (
           <motion.div className="mint-modal" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.28 }}>
             <div className="mint-modal-card">
               <h3>Notification Sent 🎉</h3>
               <p className="muted small">{qrMsg}</p>
-              <div className="qr-wrap">
+              <div className="qr-wrap" style={{ display: "flex", justifyContent: "center" }}>
                 <QRCodeCanvas value={qrLink} size={176} bgColor={"#f8fffb"} fgColor={"#033b2c"} level="M" />
               </div>
               <div style={{ display: "flex", gap: 12, marginTop: 12 }}>

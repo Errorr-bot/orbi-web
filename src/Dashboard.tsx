@@ -5,9 +5,20 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db, auth } from "./firebaseConfig";
 import "./Dashboard.css";
 
+interface NotificationItem {
+  id: string;
+  message?: string;
+  amount?: number;
+  upiLink?: string | null;
+  groupId?: string;
+  status: "read" | "unread";
+}
+
 const Dashboard: React.FC<{ email: string }> = ({ email }) => {
   const navigate = useNavigate();
+
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifList, setNotifList] = useState<NotificationItem[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [sound] = useState(new Audio("/sounds/mint_notify.mp3"));
 
@@ -15,31 +26,43 @@ const Dashboard: React.FC<{ email: string }> = ({ email }) => {
     const user = auth.currentUser;
     if (!user?.email) return;
 
-    // Listen for unread notifications
     const q = query(
       collection(db, "notifications"),
-      where("to", "==", user.email),
-      where("status", "==", "unread")
+      where("to", "==", user.email)
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      const count = snap.size;
-      setUnreadCount(count);
+      const all: NotificationItem[] = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as any),
+      }));
 
-      if (count > unreadCount) {
-        // New notification just arrived
-        sound.play();
+      setNotifList(all);
+
+      const unread = all.filter((n) => n.status === "unread").length;
+      setUnreadCount(unread);
+
+      if (unread > unreadCount) {
+        try {
+          sound.play();
+        } catch {}
+
         setToastMsg("💬 You have a new SplitEase notification!");
-        setTimeout(() => setToastMsg(null), 7000);
+        setTimeout(() => setToastMsg(null), 6000);
       }
     });
 
     return () => unsub();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unreadCount]);
+  }, [unreadCount, sound]);
 
   return (
     <div className="dash-root">
+      {/* 🔔 Notification Bell */}
+      <div className="notif-bell" onClick={() => navigate("/notifications")}>
+        🔔
+        {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
+      </div>
+
       <header className="dash-header">
         <h2>🌍 Welcome back, {email || "User"}!</h2>
         <p>Explore your Orbi Dashboard — calm, connected, and smart.</p>
@@ -54,7 +77,6 @@ const Dashboard: React.FC<{ email: string }> = ({ email }) => {
         <div className="dash-card wallet-card" onClick={() => navigate("/wallet")}>
           💰 <h3>Wallet</h3>
           <p>Track & split expenses easily.</p>
-          {unreadCount > 0 && <span className="mint-badge" />}
         </div>
 
         <div className="dash-card" onClick={() => navigate("/scan")}>
@@ -72,7 +94,7 @@ const Dashboard: React.FC<{ email: string }> = ({ email }) => {
         ⎋ Logout
       </button>
 
-      {/* Mint Toast Notification */}
+      {/* Mint Toast */}
       {toastMsg && (
         <div className="mint-toast">
           <p>{toastMsg}</p>

@@ -150,3 +150,116 @@
     transform: translate(-50%, 10px);
   }
 }
+/* Notification Bell */
+.notif-bell {
+  position: fixed;
+  top: 18px;
+  right: 22px;
+  font-size: 26px;
+  cursor: pointer;
+  z-index: 200;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 6px 18px rgba(0, 255, 204, 0.15);
+  transition: 0.2s ease;
+}
+
+.notif-bell:hover {
+  transform: scale(1.08);
+}
+
+/* red unread dot */
+.notif-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #ff4d4d;
+  border-radius: 999px;
+  top: 8px;
+  right: 8px;
+}
+
+/* dropdown */
+.notif-panel {
+  position: fixed;
+  top: 80px;
+  right: 22px;
+  width: 260px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 14px;
+  box-shadow: 0 10px 38px rgba(0, 0, 0, 0.15);
+  padding: 14px;
+  z-index: 200;
+  animation: fadeIn 0.18s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notif-item {
+  padding: 10px;
+  border-radius: 10px;
+  background: #f7fffa;
+  margin-bottom: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 255, 204, 0.2);
+}
+
+.notif-item.unread {
+  background: linear-gradient(135deg, #e8fff4, #d4fff0);
+  border-color: rgba(0, 200, 140, 0.3);
+}
+
+.notif-msg { font-weight: 600; color: #033b2c; }
+.notif-amt { font-size: 0.9rem; color: #007d54; }
+.notif-sub { font-size: 0.75rem; color: #666; margin-top: 2px; }
+/* Notification Bell */
+.notif-bell {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid rgba(0, 255, 204, 0.3);
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 20px rgba(0, 255, 204, 0.18);
+  transition: 0.25s ease;
+  z-index: 200;
+}
+
+.notif-bell:hover {
+  transform: scale(1.06);
+}
+
+/* Badge */
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff3b3b;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 11px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px white;
+}
