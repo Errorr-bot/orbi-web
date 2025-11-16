@@ -748,7 +748,7 @@ const SplitEase: React.FC = () => {
                               <path d="M15 17H9a3 3 0 0 1-3-3v-3a6 6 0 0 1 12 0v3a3 3 0 0 1-3 3z" stroke="#003d2e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                               <path d="M11 20a1.5 1.5 0 0 0 2 0" stroke="#003d2e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            💬 Notify
+                              Notify
                           </button>
 
                           <button
