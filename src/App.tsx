@@ -17,7 +17,6 @@ import SplitEase from "./SplitEase";
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-< Route path="/splitease" element={<SplitEase />} />
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -67,24 +66,23 @@ const AnimatedRoutes: React.FC<{ user: User | null }> = ({ user }) => {
         style={{ position: "relative" }}
       >
         <Routes location={location}>
-          {/* Public Routes */}
+          {/* Public Pages */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Auth mode="login" />} />
           <Route path="/signup" element={<Auth mode="signup" />} />
 
-          {/* Protected Pages */}
-          <Route
-            path="/dashboard"
-            element={<Dashboard email={user?.email || ""} />}
-          />
+          {/* Private Pages */}
+          <Route path="/dashboard" element={<Dashboard email={user?.email || ""} />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/scan" element={<Scan />} />
           <Route path="/profile" element={<Profile />} />
+
+          {/* SplitEase - receives navigation state */}
           <Route path="/splitease" element={<SplitEase />} />
         </Routes>
 
-        {/* Mint overlay transition (subtle wave between pages) */}
+        {/* transition overlay */}
         <motion.div
           className="mint-transition"
           initial={{ scaleX: 0 }}

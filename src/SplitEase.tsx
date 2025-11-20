@@ -1,5 +1,5 @@
 // src/SplitEase.tsx
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   collection,
   addDoc,
@@ -17,7 +17,6 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { QRCodeCanvas } from "qrcode.react";
 import { db, auth } from "./firebaseConfig";
 import "./SplitEase.css";
 
@@ -64,10 +63,9 @@ const SplitEase: React.FC = () => {
   const [newExpensePaidBy, setNewExpensePaidBy] = useState("");
   const [newExpenseParticipants, setNewExpenseParticipants] = useState<string[]>([]);
 
+  // toast (small mint toast used for notify/remind and other actions)
   const [toast, setToast] = useState<string | null>(null);
-  const [showQR, setShowQR] = useState(false);
-  const [qrMsg, setQrMsg] = useState("");
-  const [qrLink, setQrLink] = useState<string | null>(null);
+
   const [notifyAnim, setNotifyAnim] = useState(false);
   const [remindAnim, setRemindAnim] = useState(false);
 
@@ -75,7 +73,7 @@ const SplitEase: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
 
-  // member profile cache
+  // member profile cache (includes phone)
   const [memberProfiles, setMemberProfiles] = useState<Record<string, { email?: string; upi?: string; phone?: string }>>({});
 
   // flyout
@@ -86,10 +84,9 @@ const SplitEase: React.FC = () => {
 
   const currentUserProfileRef = useRef<any | null>(null);
 
-  // notifications (inbox) for current user
-  const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [notifList, setNotifList] = useState<any[]>([]);
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  // phone modal (let user add their phone number to their profile)
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
 
   // -----------------------
   // Firestore listeners
@@ -132,6 +129,8 @@ const SplitEase: React.FC = () => {
         const snap = await getDoc(doc(db, "profiles", user.uid));
         if (!mounted) return;
         currentUserProfileRef.current = snap.exists() ? snap.data() : null;
+        // prefill phone if available
+        if (snap.exists()) setPhoneInput((snap.data() as any).phone || "");
       } catch {
         currentUserProfileRef.current = null;
       }
@@ -186,24 +185,6 @@ const SplitEase: React.FC = () => {
     })();
     return () => (mounted = false);
   }, [members, selectedGroup]);
-
-  // listen to notifications for current user (unread count)
-  useEffect(() => {
-    if (!user?.email) {
-      setUnreadCount(0);
-      setNotifList([]);
-      return;
-    }
-    const notifRef = collection(db, "notifications");
-    const q = query(notifRef, where("to", "==", user.email), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      const docs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-      const unread = docs.filter((n) => n.status === "unread").length;
-      setUnreadCount(unread);
-      setNotifList(docs.slice(0, 20));
-    });
-    return () => unsub();
-  }, [user?.email]);
 
   // -----------------------
   // helpers: groups / members / expenses
@@ -318,32 +299,74 @@ const SplitEase: React.FC = () => {
     });
   };
 
-  // send SMS via your server endpoint (see example server code below)
-  // We call '/api/send-sms' with JSON body { phone, text, qrLink (optional) }
-  const sendSmsViaApi = async (phone: string, text: string, qrLink?: string) => {
-    try {
-      await fetch("/api/send-sms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, text, qrLink }),
-      });
-      return true;
-    } catch (err) {
-      console.warn("sendSms error", err);
-      return false;
+  // send SMS via your server endpoint (Cloud Function / local server)
+  // Tries several endpoints (useful for local vs deployed)
+  const sendSmsViaApi = async (phone: string, text: string, qrLink?: string): Promise<boolean> => {
+    const possibleUrls = [
+      "http://localhost:3001/api/send-sms",
+      "http://localhost:3001/send-sms",
+      "/api/send-sms",
+    ];
+
+    for (const url of possibleUrls) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, text, qrLink }),
+        });
+        if (!res.ok) {
+          // log and try next
+          const txt = await res.text().catch(() => "");
+          console.warn("SMS API returned non-ok for", url, res.status, txt);
+          continue;
+        }
+        // success
+        const data = await res.json().catch(() => ({}));
+        console.log("SMS API success", url, data);
+        return true;
+      } catch (err) {
+        console.warn("sendSms error for", url, err);
+        // try next url
+      }
     }
+
+    return false;
+  };
+
+  // save current user's phone into profiles collection
+  const saveMyPhone = async () => {
+    if (!user?.uid) return triggerToast("Sign in to save phone");
+    const val = phoneInput.trim();
+    if (!val) return triggerToast("Enter a valid phone");
+    try {
+      await setDoc(doc(db, "profiles", user.uid), { phone: val }, { merge: true });
+      currentUserProfileRef.current = { ...(currentUserProfileRef.current || {}), phone: val };
+      triggerToast("Phone saved");
+      setShowPhoneModal(false);
+    } catch (err) {
+      console.error("saveMyPhone error", err);
+      triggerToast("Failed to save phone");
+    }
+  };
+
+  // Smaller toast helper (centralized)
+  const triggerToast = (txt: string, ms = 2000) => {
+    setToast(txt);
+    setTimeout(() => setToast(null), ms);
   };
 
   const sendNotification = async (member: Member, amount: number) => {
     if (!user?.email) return alert("You must be logged in");
     if (!selectedGroup) return;
-    // find profile (we may already have it in cache)
+    // find profile (cache or query)
     const prof = memberProfiles[member.id] || (member.email ? await findProfileByEmail(member.email) : null);
     const upi = prof?.upi || null;
     const phone = prof?.phone || null;
-    const message = `You owe ${user.email?.split("@")[0] || "someone"} ₹${amount} • ${selectedGroup.name || ""}`;
+    const senderName = user.email?.split("@")[0] || "someone";
+    const message = `Pay ${senderName} ₹${amount} for ${selectedGroup.name || "expense"}`;
 
-    // Always create in-app notification (so recipient sees it in the app)
+    // create in-app notification
     try {
       await createNotificationDoc({
         from: user.email!,
@@ -357,48 +380,41 @@ const SplitEase: React.FC = () => {
       console.error("createNotificationDoc failed", err);
     }
 
-    // If recipient has no UPI, show a toast and don't open blocking QR modal
-    if (!upi) {
-      setToast("Recipient has no UPI on file — sent in-app notification.");
-      setNotifyAnim(true);
-      setTimeout(() => setNotifyAnim(false), 700);
-      playSound();
-
-      // If they have a phone, attempt SMS
-      if (phone) {
-        const smsText = `Pay ${member.name}\nAmount: ₹${amount}\nFor: ${selectedGroup.name || "debt"}\nUPI: (not available)\nThanks!`;
-        await sendSmsViaApi(phone, smsText, null);
-      }
-      // clear toast soon
-      setTimeout(() => setToast(null), 2800);
-      return;
-    }
-
-    // If UPI exists, build link and show QR modal + attempt SMS if phone available
-    const link = buildUpiLink(upi, member.name, amount);
-
-    // create notification with link (already created above but update here optionally)
-    try {
-      // optional additional doc or update not required
-    } catch {}
-
-    setQrMsg(`Notification sent to ${member.name}`);
-    setQrLink(link);
-    setShowQR(true);
-    setToast(`🔔 Sent to ${member.name}`);
+    // animate notify icon & play sound
     setNotifyAnim(true);
     setTimeout(() => setNotifyAnim(false), 700);
     playSound();
 
-    // If phone exists, try to send SMS with QR link
-    if (phone) {
-      const smsText = `Pay ${member.name}\nAmount: ₹${amount}\nFor: ${selectedGroup.name || "debt"}\nUPI: ${upi}\nScan QR or open link: (link included)`;
-      await sendSmsViaApi(phone, smsText, link);
+    // If UPI not present -> inform user and attempt SMS if phone present
+    if (!upi) {
+      if (phone) {
+        const smsText = `Pay ${senderName}\nTo: ${member.name}\nAmount: ₹${amount}\nFor: ${selectedGroup.name || "expense"}\nUPI: (not available)\nThanks!`;
+        const ok = await sendSmsViaApi(phone, smsText, undefined);
+        if (ok) {
+          triggerToast("In-app notification + SMS sent", 2200);
+        } else {
+          triggerToast("In-app notification sent (SMS failed)", 2200);
+        }
+      } else {
+        triggerToast("In-app notification sent (no UPI/phone)", 1800);
+      }
+      return;
     }
 
-    setTimeout(() => setToast(null), 7000);
-    // hide QR after a short while
-    setTimeout(() => setShowQR(false), 3500);
+    // UPI present: attempt SMS (if phone) and show short toast
+    let smsOk = true;
+    if (phone) {
+      const smsText = `Pay ${senderName}\nAmount: ₹${amount}\nFor: ${selectedGroup.name || "expense"}\nUPI: ${upi}\nScan the UPI link to pay.`;
+      smsOk = await sendSmsViaApi(phone, smsText, buildUpiLink(upi, member.name, amount));
+    }
+
+    // final feedback
+    if (smsOk) {
+      triggerToast("Notification sent", 1800);
+    } else {
+      // SMS failed but in-app notification created
+      triggerToast("Notification sent (SMS failed)", 2200);
+    }
   };
 
   const remindMember = async (m: Member, amount: number) => {
@@ -407,19 +423,24 @@ const SplitEase: React.FC = () => {
     setRemindAnim(true);
     setTimeout(() => setRemindAnim(false), 800);
 
-    // create repeated reminder notification
-    await createNotificationDoc({
-      from: user.email,
-      to: m.email || "unknown",
-      amount,
-      message: `Reminder: please pay ${user.email?.split("@")[0] || "someone"} ₹${amount} for ${selectedGroup?.name || ""}`,
-      groupId: selectedGroup?.id || null,
-      upiLink: null,
-      repeated: true,
-    });
+    // create repeated reminder notification in-app
+    try {
+      await createNotificationDoc({
+        from: user.email,
+        to: m.email || "unknown",
+        amount,
+        message: `Reminder: please pay ${user.email?.split("@")[0] || "someone"} ₹${amount} for ${selectedGroup?.name || ""}`,
+        groupId: selectedGroup?.id || null,
+        upiLink: null,
+        repeated: true,
+      });
+    } catch (err) {
+      console.warn("reminder create failed", err);
+    }
 
-    setToast("Reminder created (in-app).");
-    setTimeout(() => setToast(null), 2200);
+    // Play brief sound + small toast
+    playSound();
+    triggerToast("Reminder sent", 1600);
   };
 
   // -----------------------
@@ -445,8 +466,7 @@ const SplitEase: React.FC = () => {
       const notifSnap = await getDocs(notifQ);
       for (const d of notifSnap.docs) await deleteDoc(doc(db, "notifications", d.id));
       await deleteDoc(doc(db, "groups", g.id));
-      setToast(`Group "${g.name}" deleted`);
-      setTimeout(() => setToast(null), 3000);
+      triggerToast(`Group \"${g.name}\" deleted`);
       if (selectedGroup?.id === g.id) {
         setSelectedGroup(null);
         setMembers([]);
@@ -454,8 +474,7 @@ const SplitEase: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      setToast("Failed to delete group");
-      setTimeout(() => setToast(null), 3000);
+      triggerToast("Failed to delete group");
     } finally {
       setShowDeleteConfirm(false);
       setGroupToDelete(null);
@@ -468,11 +487,9 @@ const SplitEase: React.FC = () => {
   const copyToClipboard = (text: string, label = "Copied") => {
     try {
       navigator.clipboard?.writeText(text);
-      setToast(label);
-      setTimeout(() => setToast(null), 1800);
+      triggerToast(label);
     } catch {
-      setToast("Copy failed");
-      setTimeout(() => setToast(null), 1800);
+      triggerToast("Copy failed");
     }
   };
 
@@ -519,29 +536,12 @@ const SplitEase: React.FC = () => {
     return () => document.removeEventListener("keydown", h);
   }, []);
 
-  // -----------------------
-  // small UI helpers
-  // -----------------------
-  const triggerToast = (txt: string, ms = 2000) => {
-    setToast(txt);
-    setTimeout(() => setToast(null), ms);
-  };
-
-  // mark notification as read
+  // mark notification as read (utility for future UI)
   const markNotifRead = async (id: string) => {
     try {
       await updateDoc(doc(db, "notifications", id), { status: "read" });
     } catch (err) {
       console.warn("markNotifRead error", err);
-    }
-  };
-
-  // mark as paid (if you want)
-  const markNotifPaid = async (id: string) => {
-    try {
-      await updateDoc(doc(db, "notifications", id), { isPaid: true, status: "read" });
-    } catch (err) {
-      console.warn("markNotifPaid error", err);
     }
   };
 
@@ -551,13 +551,17 @@ const SplitEase: React.FC = () => {
   return (
     <motion.div className="split-root" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       {/* toast */}
-      {toast && <div className="mint-toast" role="status" aria-live="polite">{toast}</div>}
+      {toast && (
+        <div className="mint-toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      )}
 
-      {/* back button (keeps same mint style as wallet) */}
+      {/* back button (matches Wallet style) */}
       <button
-        className="back-btn mint-back"
+        className="mint-back-btn"
         onClick={() => {
-          const btn = document.querySelector(".back-btn");
+          const btn = document.querySelector(".mint-back-btn");
           if (btn) { btn.classList.add("ripple"); setTimeout(() => btn.classList.remove("ripple"), 500); }
           setTimeout(() => navigate("/wallet"), 250);
         }}
@@ -573,27 +577,14 @@ const SplitEase: React.FC = () => {
             <p className="muted">Create groups, add members, and track expenses effortlessly.</p>
           </div>
 
-          {/* Notification bell */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button className="btn noti-bell" onClick={() => setShowNotifDropdown((s) => !s)} aria-haspopup="true" aria-expanded={showNotifDropdown}>
-              🔔 {unreadCount > 0 ? <span className="badge">{unreadCount}</span> : null}
-            </button>
-            {showNotifDropdown && (
-              <div className="notif-dropdown" role="menu" aria-label="Notifications">
-                {notifList.length === 0 && <div className="muted small" style={{ padding: 10 }}>No notifications</div>}
-                {notifList.map((n) => (
-                  <div key={n.id} className={`notif-row ${n.status === "unread" ? "unread" : ""}`}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700 }}>{n.message || "Payment reminder"}</div>
-                      <div className="muted small">{n.amount ? `₹${n.amount}` : ""} • {n.from}</div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <button className="tiny" onClick={() => { markNotifRead(n.id); }}>Mark read</button>
-                      {!n.isPaid && <button className="tiny" onClick={() => { markNotifPaid(n.id); triggerToast("Marked paid"); }}>Mark paid</button>}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* small utility: let signed-in user set their phone for SMS notifications */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {user ? (
+              <button className="btn tiny" onClick={() => setShowPhoneModal(true)} title="Set your phone for SMS">
+                📲 Set my phone
+              </button>
+            ) : (
+              <div className="muted small">Sign in to enable SMS</div>
             )}
           </div>
         </header>
@@ -659,8 +650,6 @@ const SplitEase: React.FC = () => {
                             openFlyoutId === m.id ? closeFlyout() : openFlyout(m.id, el);
                           }}
                           tabIndex={0}
-                          aria-haspopup="dialog"
-                          aria-expanded={openFlyoutId === m.id}
                         >
                           <div className="member-left">
                             <strong className="member-name">{m.name}</strong>
@@ -748,7 +737,7 @@ const SplitEase: React.FC = () => {
                               <path d="M15 17H9a3 3 0 0 1-3-3v-3a6 6 0 0 1 12 0v3a3 3 0 0 1-3 3z" stroke="#003d2e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                               <path d="M11 20a1.5 1.5 0 0 0 2 0" stroke="#003d2e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                              Notify
+                            Notify
                           </button>
 
                           <button
@@ -839,18 +828,16 @@ const SplitEase: React.FC = () => {
           </motion.div>
         )}
 
-        {/* QR modal (only when link exists) */}
-        {showQR && qrLink && (
-          <motion.div className="mint-modal" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.28 }}>
+        {/* Phone modal */}
+        {showPhoneModal && (
+          <motion.div className="mint-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mint-modal-card">
-              <h3>Notification Sent 🎉</h3>
-              <p className="muted small">{qrMsg}</p>
-              <div className="qr-wrap" style={{ display: "flex", justifyContent: "center" }}>
-                <QRCodeCanvas value={qrLink} size={176} bgColor={"#f8fffb"} fgColor={"#033b2c"} level="M" />
-              </div>
-              <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
-                <button className="btn mint" onClick={() => window.open(qrLink || "")}>Open UPI app</button>
-                <button className="btn" onClick={() => { navigator.clipboard?.writeText(qrLink || ""); triggerToast("UPI link copied", 1600); }}>Copy link</button>
+              <h3>Set your phone number</h3>
+              <p className="muted small">We will use this number to send SMS reminders when you or group members notify others.</p>
+              <input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value.replace(/[^0-9+]/g, ''))} placeholder="+91XXXXXXXXXX" style={{ width: '100%', padding: 10, marginTop: 8, borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)' }} />
+              <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                <button className="btn" onClick={() => setShowPhoneModal(false)}>Cancel</button>
+                <button className="btn mint" onClick={saveMyPhone}>Save</button>
               </div>
             </div>
           </motion.div>
