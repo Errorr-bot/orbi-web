@@ -7,19 +7,92 @@ import SavingsPlanner from "./views/SavingsPlanner";
 import SplitEaseShortcut from "./views/SplitEaseShortcut";
 import { motion, AnimatePresence } from "framer-motion";
 import "./Dashboard.css";
-import { auth } from "./firebaseConfig";
+import { auth, db } from "./firebaseConfig";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+
+// Recharts
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+
+const COLORS = ["#73ffc4", "#b9ffe8", "#fdd7c2", "#ffd9e0", "#ffe9b9", "#cde8ff"];
 
 const Dashboard: React.FC = () => {
   const [activeView, setActiveView] = useState<string>("overview");
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
+  // Chart data state
+  const [categorySeries, setCategorySeries] = useState<{ name: string; amount: number }[]>([]);
+  const [monthlySeries, setMonthlySeries] = useState<{ month: string; amount: number }[]>([]);
+
+  // Listen to basic transactions (if you have transactions collection) to build chart data
+  useEffect(() => {
+    const u = auth.currentUser;
+    if (!u?.email) {
+      // Fallback to sample data
+      setCategorySeries([
+        { name: "Groceries", amount: 480 },
+        { name: "Rent", amount: 1500 },
+        { name: "Utilities", amount: 100 },
+        { name: "Transport", amount: 150 },
+        { name: "Entertainment", amount: 200 },
+        { name: "Investments", amount: 500 },
+      ]);
+      setMonthlySeries([
+        { month: "Jan", amount: 1200 },
+        { month: "Feb", amount: 1500 },
+        { month: "Mar", amount: 980 },
+        { month: "Apr", amount: 1350 },
+        { month: "May", amount: 1420 },
+        { month: "Jun", amount: 1600 },
+      ]);
+      return;
+    }
+
+    // attempt to use your "transactions" collection
+    try {
+      const q = query(collection(db, "transactions"), where("owner", "==", u.uid));
+      const unsub = onSnapshot(q, (snap) => {
+        // aggregate per category and per month
+        const catMap: Record<string, number> = {};
+        const monMap: Record<string, number> = {};
+
+        snap.docs.forEach((d) => {
+          const data: any = d.data();
+          const cat = data.category || "Other";
+          const amt = Number(data.amount || 0);
+          catMap[cat] = (catMap[cat] || 0) + Math.abs(amt);
+
+          const dt = data.date ? new Date(data.date.seconds ? data.date.seconds * 1000 : data.date) : new Date();
+          const m = dt.toLocaleString(undefined, { month: "short" });
+          monMap[m] = (monMap[m] || 0) + Math.abs(amt);
+        });
+
+        setCategorySeries(Object.keys(catMap).map((k) => ({ name: k, amount: catMap[k] })));
+        setMonthlySeries(Object.keys(monMap).map((k) => ({ month: k, amount: monMap[k] })));
+      });
+      return () => unsub();
+    } catch {
+      // ignore errors; keep sample data
+    }
+  }, []);
+
   // close small dropdowns / overlays on outside click — safe utility
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
       if (!wrapperRef.current) return;
       if (!wrapperRef.current.contains(e.target as Node)) {
-        // nothing for now, placeholder if we add right-panel overlays
+        // nothing for now
       }
     }
     document.addEventListener("click", onDocClick);
@@ -32,10 +105,9 @@ const Dashboard: React.FC = () => {
     setTimeout(() => setToastMsg(null), ms);
   };
 
-  // back button handler - same as wallet backbehavior
+  // back button handler - direct to dashboard wallet behavior not used here; when inside a view we render the tiny Back button
   const goBackToWallet = () => {
-    // change to wallet route or show wallet view - here we route to wallet path
-    window.location.href = "/wallet"; // or use navigate if using react-router
+    window.location.href = "/wallet";
   };
 
   return (
@@ -67,7 +139,7 @@ const Dashboard: React.FC = () => {
       <main className="dash-content">
         <header className="dash-header">
           <div>
-            <h2>{activeView === "overview" ? "Welcome Back" : activeView.replace(/^\w/, (s)=>s.toUpperCase())}</h2>
+            <h2>{activeView === "overview" ? "Welcome Back" : activeView.replace(/^\w/, (s) => s.toUpperCase())}</h2>
             <p className="muted">Calm, connected & smart — {auth.currentUser?.email || "your dashboard"}.</p>
           </div>
           <div className="header-actions">
@@ -77,7 +149,7 @@ const Dashboard: React.FC = () => {
         </header>
 
         <section className="dash-main-grid">
-          <AnimatePresence exitBeforeEnter>
+          <AnimatePresence mode="wait">
             {activeView === "overview" && (
               <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.28 }}>
                 <div className="overview-grid">
@@ -104,14 +176,44 @@ const Dashboard: React.FC = () => {
                       <div className="card-head">
                         <h3>Spending Overview</h3>
                       </div>
-                      <div className="chart-placeholder">[Bar chart placeholder — wire your chart here]</div>
+                      <div style={{ height: 240 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={monthlySeries}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.06} />
+                            <XAxis dataKey="month" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="amount" fill="#73ffc4" radius={[6,6,0,0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
 
                     <div className="card large">
                       <div className="card-head">
                         <h3>Category Breakdown</h3>
                       </div>
-                      <div className="chart-placeholder circle">[Donut placeholder]</div>
+                      <div style={{ height: 240, display: "grid", placeItems: "center" }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={categorySeries}
+                              dataKey="amount"
+                              nameKey="name"
+                              outerRadius={80}
+                              innerRadius={40}
+                              startAngle={90}
+                              endAngle={-270}
+                              paddingAngle={4}
+                              >
+                              {categorySeries.map((_, i) => (
+                                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
 

@@ -15,10 +15,19 @@ import {
   updateDoc,
   setDoc,
 } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { db, auth } from "./firebaseConfig";
 import "./SplitEase.css";
+
+/**
+ * NOTE:
+ * This version has been adapted to behave like a regular dashboard section:
+ * - No fixed back button / fullscreen layout
+ * - Uses compact card-like layout so it can be rendered inside Dashboard's content area
+ * - Keeps all existing functionality (groups, members, expenses, notifications, flyout, phone modal)
+ *
+ * Paste this file over your existing src/SplitEase.tsx
+ */
 
 type Member = { id: string; name: string; email?: string; createdAt?: any };
 type Expense = {
@@ -46,7 +55,6 @@ const useIsTouch = () => {
 };
 
 const SplitEase: React.FC = () => {
-  const navigate = useNavigate();
   const isTouch = useIsTouch();
   const user = auth.currentUser;
 
@@ -300,7 +308,6 @@ const SplitEase: React.FC = () => {
   };
 
   // send SMS via your server endpoint (Cloud Function / local server)
-  // Tries several endpoints (useful for local vs deployed)
   const sendSmsViaApi = async (phone: string, text: string, qrLink?: string): Promise<boolean> => {
     const possibleUrls = [
       "http://localhost:3001/api/send-sms",
@@ -316,21 +323,16 @@ const SplitEase: React.FC = () => {
           body: JSON.stringify({ phone, text, qrLink }),
         });
         if (!res.ok) {
-          // log and try next
           const txt = await res.text().catch(() => "");
           console.warn("SMS API returned non-ok for", url, res.status, txt);
           continue;
         }
-        // success
-        const data = await res.json().catch(() => ({}));
-        console.log("SMS API success", url, data);
+        await res.json().catch(() => ({}));
         return true;
       } catch (err) {
         console.warn("sendSms error for", url, err);
-        // try next url
       }
     }
-
     return false;
   };
 
@@ -359,14 +361,12 @@ const SplitEase: React.FC = () => {
   const sendNotification = async (member: Member, amount: number) => {
     if (!user?.email) return alert("You must be logged in");
     if (!selectedGroup) return;
-    // find profile (cache or query)
     const prof = memberProfiles[member.id] || (member.email ? await findProfileByEmail(member.email) : null);
     const upi = prof?.upi || null;
     const phone = prof?.phone || null;
     const senderName = user.email?.split("@")[0] || "someone";
     const message = `Pay ${senderName} ₹${amount} for ${selectedGroup.name || "expense"}`;
 
-    // create in-app notification
     try {
       await createNotificationDoc({
         from: user.email!,
@@ -380,12 +380,10 @@ const SplitEase: React.FC = () => {
       console.error("createNotificationDoc failed", err);
     }
 
-    // animate notify icon & play sound
     setNotifyAnim(true);
     setTimeout(() => setNotifyAnim(false), 700);
     playSound();
 
-    // If UPI not present -> inform user and attempt SMS if phone present
     if (!upi) {
       if (phone) {
         const smsText = `Pay ${senderName}\nTo: ${member.name}\nAmount: ₹${amount}\nFor: ${selectedGroup.name || "expense"}\nUPI: (not available)\nThanks!`;
@@ -401,18 +399,15 @@ const SplitEase: React.FC = () => {
       return;
     }
 
-    // UPI present: attempt SMS (if phone) and show short toast
     let smsOk = true;
     if (phone) {
       const smsText = `Pay ${senderName}\nAmount: ₹${amount}\nFor: ${selectedGroup.name || "expense"}\nUPI: ${upi}\nScan the UPI link to pay.`;
       smsOk = await sendSmsViaApi(phone, smsText, buildUpiLink(upi, member.name, amount));
     }
 
-    // final feedback
     if (smsOk) {
       triggerToast("Notification sent", 1800);
     } else {
-      // SMS failed but in-app notification created
       triggerToast("Notification sent (SMS failed)", 2200);
     }
   };
@@ -423,7 +418,6 @@ const SplitEase: React.FC = () => {
     setRemindAnim(true);
     setTimeout(() => setRemindAnim(false), 800);
 
-    // create repeated reminder notification in-app
     try {
       await createNotificationDoc({
         from: user.email,
@@ -438,7 +432,6 @@ const SplitEase: React.FC = () => {
       console.warn("reminder create failed", err);
     }
 
-    // Play brief sound + small toast
     playSound();
     triggerToast("Reminder sent", 1600);
   };
@@ -500,7 +493,7 @@ const SplitEase: React.FC = () => {
     if (!anchor) return;
     const rect = anchor.getBoundingClientRect();
     const viewportW = window.innerWidth;
-    const flyoutW = 280;
+    const flyoutW = 320;
     const gap = 10;
     const spaceRight = viewportW - rect.right;
     const side: "left" | "right" = spaceRight < flyoutW + gap ? "left" : "right";
@@ -549,7 +542,7 @@ const SplitEase: React.FC = () => {
   // render
   // -----------------------
   return (
-    <motion.div className="split-root" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+    <motion.div className="split-section" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
       {/* toast */}
       {toast && (
         <div className="mint-toast" role="status" aria-live="polite">
@@ -557,49 +550,36 @@ const SplitEase: React.FC = () => {
         </div>
       )}
 
-      {/* back button (matches Wallet style) */}
-      <button
-        className="mint-back-btn"
-        onClick={() => {
-          const btn = document.querySelector(".mint-back-btn");
-          if (btn) { btn.classList.add("ripple"); setTimeout(() => btn.classList.remove("ripple"), 500); }
-          setTimeout(() => navigate("/wallet"), 250);
-        }}
-      >
-        <span className="arrow">←</span>
-        <span className="tooltip">Back to Wallet</span>
-      </button>
-
-      <div className="split-wrap">
-        <header className="split-header" style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "space-between" }}>
+      {/* Main local header (keeps compact so it sits inside Dashboard) */}
+      <div className="card" style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <div>
-            <h2>SplitEase — Group Expense Splitter</h2>
-            <p className="muted">Create groups, add members, and track expenses effortlessly.</p>
+            <h3 style={{ margin: 0 }}>SplitEase — Group Expense Splitter</h3>
+            <div className="muted small">Create groups, add members, and track expenses effortlessly.</div>
           </div>
 
-          {/* small utility: let signed-in user set their phone for SMS notifications */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {user ? (
-              <button className="btn tiny" onClick={() => setShowPhoneModal(true)} title="Set your phone for SMS">
-                📲 Set my phone
-              </button>
+              <button className="btn tiny" onClick={() => setShowPhoneModal(true)} title="Set your phone for SMS">📲 Set my phone</button>
             ) : (
               <div className="muted small">Sign in to enable SMS</div>
             )}
           </div>
-        </header>
+        </div>
+      </div>
 
-        <section className="split-create">
-          <form onSubmit={handleCreateGroup} className="split-form-inline">
+      <div style={{ display: "grid", gap: 12 }}>
+        <section className="card split-create" style={{ alignItems: "center" }}>
+          <form onSubmit={handleCreateGroup} className="split-form-inline" style={{ margin: 0 }}>
             <input placeholder="New group name (e.g. Trip Goa)" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} />
             <button className="btn mint" type="submit">Create group</button>
           </form>
 
-          <div className="group-list">
-            <label>Groups</label>
-            <div className="groups-scroll">
+          <div className="group-list" style={{ marginLeft: 8 }}>
+            <label style={{ display: "block", marginBottom: 8 }}>Groups</label>
+            <div className="groups-scroll" style={{ maxWidth: 520 }}>
               {groups.map((g) => (
-                <div key={g.id} className={`group-chip ${selectedGroup?.id === g.id ? "active" : ""}`} onClick={() => setSelectedGroup(g)}>
+                <div key={g.id} className={`group-chip ${selectedGroup?.id === g.id ? "active" : ""}`} onClick={() => setSelectedGroup(g)} role="button" tabIndex={0}>
                   <span className="chip-name">{g.name}</span>
                   <button
                     className="chip-trash"
@@ -613,29 +593,30 @@ const SplitEase: React.FC = () => {
           </div>
         </section>
 
+        {/* if a group is selected show the full split management area */}
         {selectedGroup && (
-          <section className="split-main">
-            <div className="split-column">
+          <section className="split-main" style={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 12 }}>
+            <div>
               <div className="card">
                 <div className="selected-group-head">
                   <div>
-                    <h3>{selectedGroup.name}</h3>
+                    <h4 style={{ margin: 0 }}>{selectedGroup.name}</h4>
                     <div className="muted small">Currency: {selectedGroup.currency || "INR"}</div>
                   </div>
                   <div className="group-actions">
                     <button className="btn" onClick={() => setSelectedGroup(null)}>Close</button>
-                    <button className="btn mint" onClick={() => confirmDeleteGroup(selectedGroup)}>🗑 Delete group</button>
+                    <button className="btn mint" onClick={() => confirmDeleteGroup(selectedGroup)}>🗑 Delete</button>
                   </div>
                 </div>
 
-                <div className="section-block">
-                  <h4>Members</h4>
-                  <form onSubmit={handleAddMember} className="split-form-inline">
+                <div style={{ marginTop: 10 }}>
+                  <h5 style={{ marginBottom: 8 }}>Members</h5>
+                  <form onSubmit={handleAddMember} className="split-form-inline" style={{ marginBottom: 10 }}>
                     <input placeholder="Add member name" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} />
                     <button className="btn" type="submit">Add</button>
                   </form>
 
-                  <ul className="member-list" ref={listRef}>
+                  <ul className="member-list" ref={listRef} style={{ marginTop: 8 }}>
                     {members.length === 0 && <li className="muted">No members yet</li>}
                     {members.map((m) => {
                       const prof = memberProfiles[m.id];
@@ -653,10 +634,10 @@ const SplitEase: React.FC = () => {
                         >
                           <div className="member-left">
                             <strong className="member-name">{m.name}</strong>
-                            <div className="muted small">
+                            <div className="muted small" style={{ display: "flex", gap: 8, alignItems: "center" }}>
                               {prof?.upi ? <span className="upi-badge">UPI linked</span> : null}
-                              {prof?.phone ? <span style={{ marginLeft: 8 }}>📱 {prof.phone}</span> : null}
-                              {prof?.email ? <span style={{ marginLeft: 8 }}>{prof.email}</span> : null}
+                              {prof?.phone ? <span>📱 {prof.phone}</span> : null}
+                              {prof?.email ? <span>{prof.email}</span> : null}
                             </div>
                           </div>
                         </li>
@@ -666,8 +647,8 @@ const SplitEase: React.FC = () => {
                 </div>
               </div>
 
-              <div className="card section-block">
-                <h4>Add Expense</h4>
+              <div className="card" style={{ marginTop: 12 }}>
+                <h5 style={{ margin: "0 0 10px 0" }}>Add Expense</h5>
                 <form onSubmit={handleAddExpense} className="expense-form">
                   <input required placeholder="Expense title" value={newExpenseTitle} onChange={(e) => setNewExpenseTitle(e.target.value)} />
                   <input required placeholder="Amount" value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} />
@@ -676,8 +657,8 @@ const SplitEase: React.FC = () => {
                     {members.map((m) => <option value={m.id} key={m.id}>{m.name}</option>)}
                   </select>
 
-                  <div className="participants">
-                    <label>Participants</label>
+                  <div className="participants" style={{ marginTop: 6 }}>
+                    <label style={{ display: "block", marginBottom: 6 }}>Participants</label>
                     <div className="participants-list">
                       {members.map((m) => {
                         const checked = newExpenseParticipants.includes(m.id);
@@ -691,7 +672,7 @@ const SplitEase: React.FC = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                     <button className="btn mint" type="submit">Add Expense</button>
                     <button type="button" className="btn" onClick={() => { setNewExpenseTitle(""); setNewExpenseAmount(""); setNewExpensePaidBy(""); setNewExpenseParticipants([]); }}>Clear</button>
                   </div>
@@ -699,9 +680,9 @@ const SplitEase: React.FC = () => {
               </div>
             </div>
 
-            <div className="split-column">
-              <div className="card section-block">
-                <h4>Expenses</h4>
+            <aside>
+              <div className="card">
+                <h5 style={{ margin: "0 0 8px 0" }}>Expenses</h5>
                 <ul className="expense-list">
                   {expenses.length === 0 && <li className="muted">No expenses yet</li>}
                   {expenses.map((exp) => (
@@ -718,145 +699,150 @@ const SplitEase: React.FC = () => {
                 </ul>
               </div>
 
-              <div className="card section-block">
-                <h4>Balances</h4>
+              <div className="card" style={{ marginTop: 12 }}>
+                <h5 style={{ margin: "0 0 8px 0" }}>Balances</h5>
                 <div className="balances">
                   {computeBalances().map((b) => (
                     <div key={b.member.id} className="balance-row">
-                      <span>{b.member.name}</span>
-                      <span className={`bal ${b.balance > 0 ? "pos" : b.balance < 0 ? "neg" : ""}`}>₹{Math.abs(b.balance).toFixed(2)}</span>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontWeight: 700 }}>{b.member.name}</span>
+                        <span className="muted small">{b.balance > 0 ? "Credit" : b.balance < 0 ? "Owes" : "Settled"}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <span className={`bal ${b.balance > 0 ? "pos" : b.balance < 0 ? "neg" : ""}`}>₹{Math.abs(b.balance).toFixed(2)}</span>
 
-                      {b.balance < 0 && (
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button
-                            className={`btn-icon mint ${notifyAnim ? "orbi-notify-anim" : ""}`}
-                            onClick={() => { sendNotification(b.member, Math.abs(b.balance)); }}
-                            title={`Notify ${b.member.name}`}
-                          >
-                            <svg className="orbi-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
-                              <path d="M15 17H9a3 3 0 0 1-3-3v-3a6 6 0 0 1 12 0v3a3 3 0 0 1-3 3z" stroke="#003d2e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M11 20a1.5 1.5 0 0 0 2 0" stroke="#003d2e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            Notify
-                          </button>
+                        {b.balance < 0 && (
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              className={`btn-icon mint ${notifyAnim ? "orbi-notify-anim" : ""}`}
+                              onClick={() => { sendNotification(b.member, Math.abs(b.balance)); }}
+                              title={`Notify ${b.member.name}`}
+                            >
+                              <svg className="orbi-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                <path d="M15 17H9a3 3 0 0 1-3-3v-3a6 6 0 0 1 12 0v3a3 3 0 0 1-3 3z" stroke="#003d2e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M11 20a1.5 1.5 0 0 0 2 0" stroke="#003d2e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              Notify
+                            </button>
 
-                          <button
-                            className={`btn-icon remind ${remindAnim ? "orbi-remind-anim" : ""}`}
-                            onClick={() => remindMember(b.member, Math.abs(b.balance))}
-                            title={`Remind ${b.member.name}`}
-                          >
-                            <svg className="orbi-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
-                              <path d="M12 7v6l4 2" stroke="#036047" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                              <circle cx="12" cy="12" r="8" stroke="#036047" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            Remind
-                          </button>
-                        </div>
-                      )}
+                            <button
+                              className={`btn-icon remind ${remindAnim ? "orbi-remind-anim" : ""}`}
+                              onClick={() => remindMember(b.member, Math.abs(b.balance))}
+                              title={`Remind ${b.member.name}`}
+                            >
+                              <svg className="orbi-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                <path d="M12 7v6l4 2" stroke="#036047" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                                <circle cx="12" cy="12" r="8" stroke="#036047" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              Remind
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            </aside>
           </section>
         )}
-
-        {/* Flyout (single instance) */}
-        {openFlyoutId && flyoutPos && (
-          <motion.div
-            ref={flyoutRef}
-            className={`member-flyout ${flyoutPos.side}`}
-            style={{ position: "absolute", top: flyoutPos.top, left: flyoutPos.left }}
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.12 }}
-            role="dialog"
-            aria-modal="false"
-          >
-            <div className="flyout-content">
-              {(() => {
-                const m = members.find((x) => x.id === openFlyoutId);
-                const prof = m ? memberProfiles[m.id] : undefined;
-                if (!m) return <div className="muted">Member not found</div>;
-                const memberSince = m.createdAt ? new Date(m.createdAt.seconds ? m.createdAt.seconds * 1000 : m.createdAt).toLocaleDateString() : null;
-                return (
-                  <>
-                    <div className="flyout-head" style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}>
-                      <div className="avatar-bubble" aria-hidden style={{ width: 52, height: 52, borderRadius: 999, display: "grid", placeItems: "center", fontWeight: 700, background: "linear-gradient(135deg,#b9ffe8,#73ffc4)", color: "#033b2c" }}>
-                        {m.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div className="flyout-name">👤 {m.name}</div>
-                        {prof?.email ? <div className="flyout-email" style={{ fontSize: 13 }}>{prof.email}</div> : <div className="flyout-muted">No email linked</div>}
-                      </div>
-                    </div>
-
-                    <div className="flyout-body" style={{ marginBottom: 8 }}>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                        <div className="flyout-label">Status</div>
-                        <div style={{ fontWeight: 700 }}>{prof?.upi ? "UPI linked" : "No UPI"}</div>
-                      </div>
-                      {prof?.phone && <div style={{ marginTop: 2 }}><strong>Phone:</strong> {prof.phone}</div>}
-                      {memberSince && (
-                        <div style={{ marginTop: 6, color: "rgba(2,40,30,0.6)", fontSize: 13 }}>Member since: {memberSince}</div>
-                      )}
-                    </div>
-
-                    <div className="flyout-actions" style={{ display: "flex", gap: 8 }}>
-                      {prof?.upi ? (
-                        <button
-                          className="btn mint"
-                          onClick={() => {
-                            const link = buildUpiLink(prof.upi, m.name, 0);
-                            window.open(link);
-                            triggerToast("Opening UPI app", 1400);
-                          }}
-                        >
-                          Open UPI app
-                        </button>
-                      ) : (
-                        <button className="btn" onClick={() => triggerToast("No UPI to open")}>No UPI</button>
-                      )}
-
-                      <button className="btn" onClick={() => copyToClipboard(m.name, "Name copied")}>Copy name</button>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Phone modal */}
-        {showPhoneModal && (
-          <motion.div className="mint-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="mint-modal-card">
-              <h3>Set your phone number</h3>
-              <p className="muted small">We will use this number to send SMS reminders when you or group members notify others.</p>
-              <input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value.replace(/[^0-9+]/g, ''))} placeholder="+91XXXXXXXXXX" style={{ width: '100%', padding: 10, marginTop: 8, borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)' }} />
-              <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                <button className="btn" onClick={() => setShowPhoneModal(false)}>Cancel</button>
-                <button className="btn mint" onClick={saveMyPhone}>Save</button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Delete confirm modal */}
-        {showDeleteConfirm && groupToDelete && (
-          <motion.div className="mint-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="mint-modal-card">
-              <h3>Delete Group</h3>
-              <p className="muted small">Are you sure you want to permanently delete "<strong>{groupToDelete.name}</strong>"? This will remove members, expenses and notifications tied to this group.</p>
-              <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                <button className="btn" onClick={() => { setShowDeleteConfirm(false); setGroupToDelete(null); }}>Cancel</button>
-                <button className="btn mint" onClick={deleteGroup}>Yes, delete</button>
-              </div>
-            </div>
-          </motion.div>
-        )}
       </div>
+
+      {/* Flyout (single instance) */}
+      {openFlyoutId && flyoutPos && (
+        <motion.div
+          ref={flyoutRef}
+          className={`member-flyout ${flyoutPos.side}`}
+          style={{ position: "absolute", top: flyoutPos.top, left: flyoutPos.left, zIndex: 1200 }}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.12 }}
+          role="dialog"
+          aria-modal="false"
+        >
+          <div className="flyout-content">
+            {(() => {
+              const m = members.find((x) => x.id === openFlyoutId);
+              const prof = m ? memberProfiles[m.id] : undefined;
+              if (!m) return <div className="muted">Member not found</div>;
+              const memberSince = m.createdAt ? new Date(m.createdAt.seconds ? m.createdAt.seconds * 1000 : m.createdAt).toLocaleDateString() : null;
+              return (
+                <>
+                  <div className="flyout-head" style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}>
+                    <div className="avatar-bubble" aria-hidden style={{ width: 52, height: 52, borderRadius: 999, display: "grid", placeItems: "center", fontWeight: 700, background: "linear-gradient(135deg,#b9ffe8,#73ffc4)", color: "#033b2c" }}>
+                      {m.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div className="flyout-name">👤 {m.name}</div>
+                      {prof?.email ? <div className="flyout-email" style={{ fontSize: 13 }}>{prof.email}</div> : <div className="flyout-muted">No email linked</div>}
+                    </div>
+                  </div>
+
+                  <div className="flyout-body" style={{ marginBottom: 8 }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                      <div className="flyout-label">Status</div>
+                      <div style={{ fontWeight: 700 }}>{prof?.upi ? "UPI linked" : "No UPI"}</div>
+                    </div>
+                    {prof?.phone && <div style={{ marginTop: 2 }}><strong>Phone:</strong> {prof.phone}</div>}
+                    {memberSince && (
+                      <div style={{ marginTop: 6, color: "rgba(2,40,30,0.6)", fontSize: 13 }}>Member since: {memberSince}</div>
+                    )}
+                  </div>
+
+                  <div className="flyout-actions" style={{ display: "flex", gap: 8 }}>
+                    {prof?.upi ? (
+                      <button
+                        className="btn mint"
+                        onClick={() => {
+                          const link = buildUpiLink(prof.upi, m.name, 0);
+                          window.open(link);
+                          triggerToast("Opening UPI app", 1400);
+                        }}
+                      >
+                        Open UPI app
+                      </button>
+                    ) : (
+                      <button className="btn" onClick={() => triggerToast("No UPI to open")}>No UPI</button>
+                    )}
+
+                    <button className="btn" onClick={() => copyToClipboard(m.name, "Name copied")}>Copy name</button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Phone modal */}
+      {showPhoneModal && (
+        <motion.div className="mint-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div className="mint-modal-card">
+            <h3>Set your phone number</h3>
+            <p className="muted small">We will use this number to send SMS reminders when you or group members notify others.</p>
+            <input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value.replace(/[^0-9+]/g, ''))} placeholder="+91XXXXXXXXXX" style={{ width: '100%', padding: 10, marginTop: 8, borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)' }} />
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <button className="btn" onClick={() => setShowPhoneModal(false)}>Cancel</button>
+              <button className="btn mint" onClick={saveMyPhone}>Save</button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Delete confirm modal */}
+      {showDeleteConfirm && groupToDelete && (
+        <motion.div className="mint-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div className="mint-modal-card">
+            <h3>Delete Group</h3>
+            <p className="muted small">Are you sure you want to permanently delete "<strong>{groupToDelete.name}</strong>"? This will remove members, expenses and notifications tied to this group.</p>
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <button className="btn" onClick={() => { setShowDeleteConfirm(false); setGroupToDelete(null); }}>Cancel</button>
+              <button className="btn mint" onClick={deleteGroup}>Yes, delete</button>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };

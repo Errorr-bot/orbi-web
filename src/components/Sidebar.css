@@ -1,0 +1,86 @@
+/* Modern Mint Sidebar (Matches Dashboard) */
+
+.sidebar-root {
+  width: 210px;
+  min-height: 100vh;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(14px);
+  border-right: 1px solid rgba(0, 255, 204, 0.15);
+  box-shadow: 6px 0 40px rgba(0, 255, 204, 0.05);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 500;
+}
+
+.sidebar-logo {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.sidebar-brand {
+  font-size: 1.6rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00e6c0, #006f52);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* NAV ITEMS */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-item {
+  position: relative;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #024d39;
+}
+
+.sidebar-item .si-icon {
+  font-size: 1.2rem;
+}
+
+.sidebar-item.active {
+  color: #024d39;
+}
+
+/* Highlight Bubble Behind Active Item */
+.sidebar-active-highlight {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #b9ffe8, #73ffc4);
+  z-index: -1;
+  box-shadow: 0 6px 20px rgba(0, 200, 150, 0.18);
+}
+
+/* Footer */
+.sidebar-footer {
+  margin-top: auto;
+  text-align: center;
+  padding-top: 12px;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+@media (max-width: 900px) {
+  .sidebar-root {
+    width: 180px;
+  }
+}

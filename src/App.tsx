@@ -72,7 +72,7 @@ const AnimatedRoutes: React.FC<{ user: User | null }> = ({ user }) => {
           <Route path="/signup" element={<Auth mode="signup" />} />
 
           {/* Private Pages */}
-          <Route path="/dashboard" element={<Dashboard email={user?.email || ""} />} />
+          <Route path="/dashboard" element={<Dashboard />} /> 
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/scan" element={<Scan />} />

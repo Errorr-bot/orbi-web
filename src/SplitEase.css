@@ -737,3 +737,173 @@ body{
 }
 .orbi-remind-anim{animation:orbiWobble .8s ease;}
 
+/* --- SplitEase unified dashboard layout --- */
+.dash-inner-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: 30px;
+}
+
+.split-root {
+  padding: 0 !important;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.split-wrap {
+  width: 100%;
+  max-width: 900px !important;
+  margin: 0 auto;
+}
+/* ------------------------------------------
+   SplitEase — Dashboard Integrated Version
+   Clean • Compact • Modern Mint UI
+------------------------------------------- */
+
+.split-container {
+  padding: 10px 18px;
+  width: 100%;
+}
+
+.split-header {
+  margin-bottom: 12px;
+}
+
+.split-header h2 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.muted {
+  color: rgba(40, 60, 50, 0.55);
+  font-size: 0.9rem;
+}
+
+/* Main Grid (2 column layout) */
+.split-main {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .split-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card */
+.card {
+  background: #ffffffee;
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid rgba(0, 120, 90, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 160, 120, 0.06);
+}
+
+/* Group creation row */
+.split-create {
+  display: flex;
+  justify-content: space-between;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0, 160, 120, 0.05);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Input */
+.split-form-inline input,
+.expense-form input,
+.expense-form select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  width: 100%;
+  background: white;
+}
+
+/* Button */
+.btn {
+  padding: 7px 14px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 80, 60, 0.12);
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn.mint {
+  background: linear-gradient(135deg, #b9ffe8, #75ffd3);
+  border: none;
+  color: #033b2c;
+}
+
+/* Group Chips */
+.group-chip {
+  background: white;
+  padding: 7px 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 150, 110, 0.15);
+  transition: 0.2s;
+}
+
+.group-chip.active {
+  background: #e8fff5;
+  border-color: #73ffc4;
+  transform: scale(1.03);
+}
+
+/* Member List */
+.member-list li {
+  background: #fff;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 12px rgba(0, 160, 120, 0.04);
+}
+
+/* Expense List */
+.expense-list li {
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Balance Row */
+.balance-row {
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.bal.pos {
+  color: #00845f;
+  font-weight: 700;
+}
+
+.bal.neg {
+  color: #d00033;
+  font-weight: 700;
+}
+
+/* Flyout remains same (your flyout CSS was good) */
